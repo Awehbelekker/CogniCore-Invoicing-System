@@ -1,0 +1,35 @@
+{
+  "name": "Aweh Be Lekker Invoice System",
+  "short_name": "Aweh Invoices",
+  "description": "Professional invoicing system for Awake South Africa",
+  "start_url": "/COMPLETE-INVOICE-SYSTEM.html",
+  "display": "standalone",
+  "background_color": "#0a0e14",
+  "theme_color": "#00d4ff",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "finance", "productivity"],
+  "shortcuts": [
+    {
+      "name": "New Invoice",
+      "short_name": "New",
+      "description": "Create a new invoice",
+      "url": "/COMPLETE-INVOICE-SYSTEM.html#new-invoice",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>➕</text></svg>", "sizes": "96x96" }]
+    },
+    {
+      "name": "Scan Document",
+      "short_name": "Scan",
+      "description": "Scan a document with AI",
+      "url": "/COMPLETE-INVOICE-SYSTEM.html#scan",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📷</text></svg>", "sizes": "96x96" }]
+    }
+  ]
+}

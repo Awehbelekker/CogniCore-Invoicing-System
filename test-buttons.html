@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Button Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            pointer-events: auto;
+            position: relative;
+            z-index: 10;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 5px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: #1a1a1a;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+        }
+        #log {
+            background: #000;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            padding: 2px 0;
+        }
+        .success { color: #84fab0; }
+        .error { color: #ff6b6b; }
+        .info { color: #4ecdc4; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Button Click Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Simple Button Clicks</h2>
+        <button class="btn btn-primary" onclick="logClick('Button 1')">Test Button 1</button>
+        <button class="btn btn-success" onclick="logClick('Button 2')">Test Button 2</button>
+        <button class="btn btn-primary" onclick="logClick('Button 3')">Test Button 3</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Modal Test</h2>
+        <button class="btn btn-primary" onclick="openTestModal()">Open Modal</button>
+        <p>👉 Click modal background to close it, then try buttons again</p>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Z-Index Test</h2>
+        <div style="position: relative;">
+            <button class="btn btn-success" onclick="logClick('Z-Index Test')" style="z-index: 10;">Button (z-index: 10)</button>
+            <div style="position: absolute; top: 0; left: 0; width: 200px; height: 50px; background: rgba(255,0,0,0.3); z-index: 5;" onclick="logClick('Overlay (z:5)')">
+                Red Overlay (z-index: 5)
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Pointer Events Test</h2>
+        <div style="position: relative;">
+            <button class="btn btn-primary" onclick="logClick('Behind Overlay')" style="z-index: 1;">Button Behind</button>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,255,0,0.2); z-index: 1000; pointer-events: none;">
+                Overlay (pointer-events: none - should allow clicks)
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Event Log</h2>
+        <div id="log"></div>
+        <button class="btn btn-primary" onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <!-- Test Modal -->
+    <div id="testModal" class="modal">
+        <div class="modal-content">
+            <h2>Test Modal</h2>
+            <p>This modal has z-index: 1000. Try clicking outside to close.</p>
+            <button class="btn btn-success" onclick="closeTestModal()">Close Modal</button>
+        </div>
+    </div>
+
+    <script>
+        let clickCount = 0;
+
+        function logClick(source) {
+            clickCount++;
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry success';
+            entry.textContent = `✅ [${clickCount}] ${new Date().toLocaleTimeString()} - Click from: ${source}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log('Click:', source);
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            clickCount = 0;
+            logClick('Clear Log button');
+        }
+
+        function openTestModal() {
+            logClick('Open Modal button');
+            const modal = document.getElementById('testModal');
+            modal.classList.add('active');
+        }
+
+        function closeTestModal() {
+            logClick('Close Modal button');
+            const modal = document.getElementById('testModal');
+            modal.classList.remove('active');
+        }
+
+        // Close modal on outside click
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('testModal');
+            if (event.target === modal) {
+                logClick('Modal background');
+                closeTestModal();
+            }
+        });
+
+        // Log on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry info';
+            entry.textContent = `ℹ️ Page loaded at ${new Date().toLocaleTimeString()}`;
+            logDiv.appendChild(entry);
+        });
+
+        // Test for modals stuck open
+        window.addEventListener('load', () => {
+            const openModals = document.querySelectorAll('.modal.active');
+            if (openModals.length > 0) {
+                const logDiv = document.getElementById('log');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry error';
+                entry.textContent = `⚠️ WARNING: ${openModals.length} modal(s) are stuck open!`;
+                logDiv.appendChild(entry);
+            }
+        });
+
+        console.log('🧪 Button test page loaded');
+    </script>
+</body>
+</html>

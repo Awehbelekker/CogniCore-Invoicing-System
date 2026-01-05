@@ -1,0 +1,29 @@
+# Documentation files (optional - remove if you want them deployed)
+*.md
+!README.md
+
+# Node modules
+node_modules/
+
+# Local server file (not needed on Vercel)
+server.js
+
+# Git files
+.git/
+.gitignore
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+

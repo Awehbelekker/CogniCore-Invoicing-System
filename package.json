@@ -1,0 +1,22 @@
+{
+  "name": "aweh-invoice-system",
+  "version": "1.0.0",
+  "description": "Complete Invoice Management System for Aweh Be Lekker with Google Drive Integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "invoice",
+    "billing",
+    "google-drive",
+    "business-management"
+  ],
+  "author": "Aweh Be Lekker",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
