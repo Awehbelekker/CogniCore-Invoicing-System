@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Aweh Be Lekker Invoice System</title>
+    <title>Login - ConiCore Invoicing</title>
     <style>
         * {
             margin: 0;
@@ -216,29 +216,35 @@
             text-decoration: none;
         }
     </style>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <!-- Microsoft Authentication Library (MSAL) -->
+    <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
 </head>
 <body>
     <div class="login-container">
-        <div class="logo">
-            <h1>🌊 Aweh Be Lekker</h1>
-            <p>Invoice Management System</p>
+        <div class="logo" id="platformLogo">
+            <h1>📊 ConiCore</h1>
+            <p>Professional Invoicing System</p>
         </div>
 
         <div id="alertBox" class="alert"></div>
 
         <div id="loginForm">
-            <!-- Social Login Buttons - Coming Soon -->
-            <button class="btn btn-google" onclick="loginWithGoogle()" style="opacity: 0.6; cursor: not-allowed;" title="Google login coming soon - Please use email/password">
+            <!-- Google Login - Primary Method -->
+            <button class="btn btn-google" onclick="loginWithGoogle()" id="googleLoginBtn" style="font-weight: 600;">
                 <svg width="20" height="20" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Continue with Google (Coming Soon)
+                🔐 Sign in with Google (Recommended)
             </button>
+            <p style="text-align: center; font-size: 0.8rem; opacity: 0.7; margin: 0.5rem 0 1rem;">✅ Auto-syncs to your private Google Drive</p>
 
-            <button class="btn btn-microsoft" onclick="loginWithMicrosoft()" style="opacity: 0.6; cursor: not-allowed;" title="Microsoft login coming soon - Please use email/password">
+            <button class="btn btn-microsoft" onclick="loginWithMicrosoft()" id="microsoftLoginBtn">
                 <svg width="20" height="20" viewBox="0 0 23 23">
                     <path fill="#f3f3f3" d="M0 0h23v23H0z"/>
                     <path fill="#f35325" d="M1 1h10v10H1z"/>
@@ -246,12 +252,24 @@
                     <path fill="#05a6f0" d="M1 12h10v10H1z"/>
                     <path fill="#ffba08" d="M12 12h10v10H12z"/>
                 </svg>
-                Continue with Microsoft
+                🔐 Sign in with Microsoft
             </button>
+            <p style="text-align: center; font-size: 0.8rem; opacity: 0.7; margin: 0.5rem 0 1rem;">☁️ Optional OneDrive sync available</p>
 
             <div class="divider"><span>OR</span></div>
 
-            <form onsubmit="handleLogin(event)">
+            <!-- Login with Code Option -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                <button type="button" class="btn btn-outline" id="tabEmailLogin" onclick="showEmailLogin()" style="flex: 1; padding: 0.6rem; font-size: 0.85rem; background: rgba(102, 126, 234, 0.2);">
+                    ✉️ Email Login
+                </button>
+                <button type="button" class="btn btn-outline" id="tabCodeLogin" onclick="showCodeLogin()" style="flex: 1; padding: 0.6rem; font-size: 0.85rem;">
+                    🎫 Login Code
+                </button>
+            </div>
+
+            <!-- Email/Password Login Form -->
+            <form onsubmit="handleLogin(event)" id="emailLoginForm">
                 <div class="form-group">
                     <label class="form-label">Email or Username</label>
                     <input type="text" class="form-control" id="loginEmail" placeholder="Enter your email" required>
@@ -271,9 +289,53 @@
 
                 <button type="submit" class="btn btn-primary">Login</button>
             </form>
+            
+            <!-- Login Code Form -->
+            <form onsubmit="handleCodeLogin(event)" id="codeLoginForm" style="display: none;">
+                <div style="background: rgba(102, 126, 234, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center;">
+                    <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">🎫 Got a login code from your admin?</p>
+                    <p style="font-size: 0.8rem; opacity: 0.7;">Enter your code and temporary password below</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Login Code</label>
+                    <input type="text" class="form-control" id="loginCode" placeholder="e.g., ABC123" style="text-transform: uppercase; font-family: monospace; letter-spacing: 2px; text-align: center; font-size: 1.2rem;" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Temporary Password</label>
+                    <input type="password" class="form-control" id="loginCodePassword" placeholder="Enter your temp password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">🔓 Login with Code</button>
+            </form>
 
             <div class="links">
                 Don't have an account? <a href="#" onclick="showRegister()">Sign up</a>
+            </div>
+        </div>
+        
+        <!-- Password Change Modal -->
+        <div id="passwordChangeModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: none; align-items: center; justify-content: center;">
+            <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 2rem; border-radius: 16px; max-width: 400px; width: 90%; border: 2px solid var(--primary);">
+                <h2 style="margin-bottom: 1rem; text-align: center;">🔐 Set Your New Password</h2>
+                <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1.5rem; text-align: center;">
+                    For security, please change your temporary password.
+                </p>
+                
+                <form onsubmit="handlePasswordChange(event)">
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword" placeholder="Enter new password" required minlength="8">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirmNewPassword" placeholder="Confirm new password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">✓ Set Password & Continue</button>
+                </form>
             </div>
         </div>
 
@@ -302,6 +364,17 @@
                 <div class="form-group">
                     <label class="form-label">Confirm Password</label>
                     <input type="password" class="form-control" id="regConfirmPassword" placeholder="Confirm your password" required>
+                </div>
+                
+                <!-- Company Join Code -->
+                <div class="form-group" style="background: rgba(255, 190, 11, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255, 190, 11, 0.3);">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;">
+                        🎫 Company Join Code <span style="opacity: 0.6; font-weight: normal;">(optional)</span>
+                    </label>
+                    <input type="text" class="form-control" id="regCompanyCode" placeholder="e.g., CONI-X7K9-M2PQ" style="text-transform: uppercase; font-family: monospace; letter-spacing: 1px;">
+                    <small style="opacity: 0.7; display: block; margin-top: 0.5rem;">
+                        Got a code from your company admin? Enter it to join their business.
+                    </small>
                 </div>
 
                 <button type="submit" class="btn btn-primary">Create Account</button>
@@ -335,10 +408,51 @@
             </div>
         </div>
     </div>
+    
+    <!-- Permanent Powered by ConiCore footer -->
+    <div id="conicorePoweredBy" style="position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 0.5rem; text-align: center; z-index: 9999;">
+        <span style="font-size: 0.75rem; color: #a8b2d1; letter-spacing: 0.5px;">⚡ Powered by </span>
+        <span style="font-weight: 700; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 0.85rem;">ConiCore</span>
+        <span style="font-size: 0.75rem; color: #a8b2d1;"> Technology</span>
+    </div>
 
     <script>
+        // Load platform branding
+        function loadLoginBranding() {
+            const branding = JSON.parse(localStorage.getItem('conicore_platform_branding') || '{}');
+            
+            // Update platform name and tagline
+            const logoDiv = document.getElementById('platformLogo');
+            if (logoDiv && branding.name) {
+                const logoHtml = branding.logo 
+                    ? `<img src="${branding.logo}" style="max-height: 80px; margin-bottom: 0.5rem;">`
+                    : '';
+                logoDiv.innerHTML = `
+                    ${logoHtml}
+                    <h1>${branding.logo ? '' : '📊 '}${branding.name || 'ConiCore'}</h1>
+                    <p>${branding.tagline || 'Professional Invoicing System'}</p>
+                `;
+            }
+            
+            // Apply brand colors
+            if (branding.primaryColor) {
+                document.documentElement.style.setProperty('--primary', branding.primaryColor);
+            }
+            if (branding.secondaryColor) {
+                document.documentElement.style.setProperty('--secondary', branding.secondaryColor);
+            }
+            if (branding.accentColor) {
+                document.documentElement.style.setProperty('--accent', branding.accentColor);
+            }
+            
+            // Powered by ConiCore footer is always visible - cannot be hidden
+        }
+        
+        // Run on load
+        loadLoginBranding();
+        
         // Check if user is already logged in
-        if (localStorage.getItem('aweh_user')) {
+        if (localStorage.getItem('conicore_user') || localStorage.getItem('aweh_user')) {
             window.location.href = 'COMPLETE-INVOICE-SYSTEM.html';
         }
 
@@ -363,13 +477,151 @@
             document.getElementById('registerForm').style.display = 'block';
             document.getElementById('alertBox').style.display = 'none';
         }
+        
+        // Toggle between email and code login
+        function showEmailLogin() {
+            document.getElementById('emailLoginForm').style.display = 'block';
+            document.getElementById('codeLoginForm').style.display = 'none';
+            document.getElementById('tabEmailLogin').style.background = 'rgba(102, 126, 234, 0.2)';
+            document.getElementById('tabCodeLogin').style.background = 'transparent';
+        }
+        
+        function showCodeLogin() {
+            document.getElementById('emailLoginForm').style.display = 'none';
+            document.getElementById('codeLoginForm').style.display = 'block';
+            document.getElementById('tabEmailLogin').style.background = 'transparent';
+            document.getElementById('tabCodeLogin').style.background = 'rgba(102, 126, 234, 0.2)';
+        }
+        
+        // Login with code
+        let pendingPasswordChangeUser = null;
+        
+        function handleCodeLogin(event) {
+            event.preventDefault();
+            
+            const code = document.getElementById('loginCode').value.trim().toUpperCase();
+            const password = document.getElementById('loginCodePassword').value;
+            
+            // Get users from both storage keys
+            const users = JSON.parse(localStorage.getItem('conicore_users') || localStorage.getItem('aweh_users') || '[]');
+            
+            // Find user by login code
+            const user = users.find(u => u.loginCode === code && u.password === password);
+            
+            if (!user) {
+                showAlert('Invalid login code or password!', 'error');
+                return;
+            }
+            
+            // Check user status
+            if (user.status === 'blocked') {
+                showAlert('⛔ Your account has been blocked. Contact your administrator.', 'error');
+                return;
+            }
+            
+            // Check if password change required
+            if (user.requirePasswordChange) {
+                pendingPasswordChangeUser = user;
+                showPasswordChangeModal();
+                return;
+            }
+            
+            // Complete login
+            completeLogin(user);
+        }
+        
+        function showPasswordChangeModal() {
+            const modal = document.getElementById('passwordChangeModal');
+            modal.style.display = 'flex';
+        }
+        
+        function handlePasswordChange(event) {
+            event.preventDefault();
+            
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmNewPassword').value;
+            
+            if (newPassword !== confirmPassword) {
+                showAlert('Passwords do not match!', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 8) {
+                showAlert('Password must be at least 8 characters!', 'error');
+                return;
+            }
+            
+            // Update user password
+            const users = JSON.parse(localStorage.getItem('conicore_users') || localStorage.getItem('aweh_users') || '[]');
+            const userIndex = users.findIndex(u => u.id === pendingPasswordChangeUser.id);
+            
+            if (userIndex !== -1) {
+                users[userIndex].password = newPassword;
+                users[userIndex].requirePasswordChange = false;
+                users[userIndex].passwordChangedAt = new Date().toISOString();
+                delete users[userIndex].tempPassword;
+                
+                localStorage.setItem('conicore_users', JSON.stringify(users));
+                
+                // Hide modal and complete login
+                document.getElementById('passwordChangeModal').style.display = 'none';
+                completeLogin(users[userIndex]);
+            }
+        }
+        
+        function completeLogin(user) {
+            // Update last login
+            const users = JSON.parse(localStorage.getItem('conicore_users') || localStorage.getItem('aweh_users') || '[]');
+            const userIndex = users.findIndex(u => u.id === user.id);
+            if (userIndex !== -1) {
+                users[userIndex].lastLogin = new Date().toISOString();
+                localStorage.setItem('conicore_users', JSON.stringify(users));
+            }
+            
+            // Save current user session
+            localStorage.setItem('conicore_user', JSON.stringify({
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                username: user.username,
+                role: user.role,
+                status: user.status || 'active',
+                termsAccepted: user.termsAccepted || false,
+                loginTime: new Date().toISOString(),
+                businessId: user.businessId,
+                businessAccess: user.businessAccess
+            }));
+            
+            // Also set in aweh_user for backwards compatibility
+            localStorage.setItem('aweh_user', JSON.stringify({
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                username: user.username,
+                role: user.role,
+                status: user.status || 'active',
+                termsAccepted: user.termsAccepted || false,
+                loginTime: new Date().toISOString(),
+                businessId: user.businessId,
+                businessAccess: user.businessAccess
+            }));
+            
+            // Set session time for timeout tracking
+            localStorage.setItem('conicore_session_time', Date.now().toString());
+            
+            showAlert('Login successful! Redirecting...', 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'COMPLETE-INVOICE-SYSTEM.html';
+            }, 800);
+        }
 
         function showForgotPassword() {
             showAlert('Password reset feature coming soon! Contact your administrator.', 'success');
         }
 
         function createDefaultAdmin() {
-            const users = JSON.parse(localStorage.getItem('aweh_users') || '[]');
+            const users = JSON.parse(localStorage.getItem('conicore_users') || localStorage.getItem('aweh_users') || '[]');
             
             // Check if default admin already exists
             const adminExists = users.find(u => u.email === 'awehbelekker@gmail.com');
@@ -387,7 +639,7 @@
                 };
                 
                 users.push(defaultAdmin);
-                localStorage.setItem('aweh_users', JSON.stringify(users));
+                localStorage.setItem('conicore_users', JSON.stringify(users));
                 console.log('✅ Default admin account created');
             }
         }
@@ -401,33 +653,37 @@
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
             
-            // Get users from localStorage
-            const users = JSON.parse(localStorage.getItem('aweh_users') || '[]');
+            // Get users from localStorage (check both keys)
+            const users = JSON.parse(localStorage.getItem('conicore_users') || localStorage.getItem('aweh_users') || '[]');
             
-            // Find user
+            // Find user by email/username or login code
             const user = users.find(u => 
-                (u.email === email || u.username === email) && u.password === password
+                ((u.email === email || u.username === email || u.loginCode === email.toUpperCase()) && u.password === password)
             );
             
             if (user) {
-                // Save current user
-                localStorage.setItem('aweh_user', JSON.stringify({
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    username: user.username,
-                    role: user.role,
-                    loginTime: new Date().toISOString()
-                }));
+                // Check user status
+                if (user.status === 'blocked') {
+                    showAlert('⛔ Your account has been blocked. Contact your administrator.', 'error');
+                    return;
+                }
                 
-                showAlert('Login successful! Redirecting...', 'success');
+                if (user.status === 'pending') {
+                    showAlert('⏳ Your account is pending approval. Please wait for admin to approve.', 'error');
+                    return;
+                }
                 
-                // Redirect to dashboard
-                setTimeout(() => {
-                    window.location.href = 'COMPLETE-INVOICE-SYSTEM.html';
-                }, 800);
+                // Check if password change required
+                if (user.requirePasswordChange) {
+                    pendingPasswordChangeUser = user;
+                    showPasswordChangeModal();
+                    return;
+                }
+                
+                // Complete login using shared function
+                completeLogin(user);
             } else {
-                showAlert('Invalid email/username or password! Try: admin / Riley@Dai2024!', 'error');
+                showAlert('Invalid email/username or password!', 'error');
             }
         }
 
@@ -435,10 +691,11 @@
             event.preventDefault();
             
             const name = document.getElementById('regName').value;
-            const email = document.getElementById('regEmail').value;
+            const email = document.getElementById('regEmail').value.toLowerCase().trim();
             const username = document.getElementById('regUsername').value;
             const password = document.getElementById('regPassword').value;
             const confirmPassword = document.getElementById('regConfirmPassword').value;
+            const companyCode = document.getElementById('regCompanyCode')?.value?.toUpperCase().trim() || '';
             
             if (password !== confirmPassword) {
                 showAlert('Passwords do not match!', 'error');
@@ -459,39 +716,461 @@
                 return;
             }
             
+            // Check company join code if provided
+            let joinedBusinessId = null;
+            let joinedBusinessName = null;
+            if (companyCode) {
+                const businesses = JSON.parse(localStorage.getItem('aweh_businesses') || '[]');
+                const business = businesses.find(b => b.joinCode === companyCode);
+                
+                if (!business) {
+                    showAlert('❌ Invalid company join code. Please check the code and try again.', 'error');
+                    return;
+                }
+                
+                joinedBusinessId = business.id;
+                joinedBusinessName = business.name;
+                
+                // Add user to authorized users list
+                if (!business.authorizedUsers) business.authorizedUsers = [];
+                if (!business.authorizedUsers.includes(email)) {
+                    business.authorizedUsers.push(email);
+                    localStorage.setItem('aweh_businesses', JSON.stringify(businesses));
+                }
+            }
+            
             // Create new user
+            const isFirstUser = users.length === 0;
             const newUser = {
                 id: Date.now(),
                 name: name,
                 email: email,
                 username: username,
                 password: password,
-                role: users.length === 0 ? 'admin' : 'user', // First user is admin
+                role: isFirstUser ? 'owner' : 'user', // First user is owner
+                status: isFirstUser ? 'active' : 'pending', // First user auto-approved, others pending
+                termsAccepted: false, // Must accept T&C on first login
+                termsAcceptedAt: null,
                 createdAt: new Date().toISOString(),
-                provider: 'local'
+                provider: 'local',
+                businessId: joinedBusinessId, // Link to joined business
+                businessAccess: joinedBusinessId ? [joinedBusinessId] : []
             };
             
             users.push(newUser);
             localStorage.setItem('aweh_users', JSON.stringify(users));
             
-            showAlert('Account created successfully! Please login.', 'success');
-            setTimeout(() => showLogin(), 2000);
+            // Set current business to joined business
+            if (joinedBusinessId) {
+                localStorage.setItem('aweh_currentBusiness', joinedBusinessId);
+                if (isFirstUser) {
+                    showAlert(`✅ Account created! You've joined "${joinedBusinessName}". Please login.`, 'success');
+                } else {
+                    showAlert(`✅ Account created! Awaiting admin approval for "${joinedBusinessName}".`, 'success');
+                }
+            } else {
+                if (isFirstUser) {
+                    showAlert('Account created successfully! Please login.', 'success');
+                } else {
+                    showAlert('✅ Account created! Awaiting admin approval before you can login.', 'success');
+                }
+            }
+            setTimeout(() => showLogin(), 2500);
         }
 
+        // Google OAuth Configuration
+        const GOOGLE_CLIENT_ID = localStorage.getItem('google_drive_client_id') || '';
+        let googleTokenClient = null;
+        
+        async function initGoogleAuth() {
+            // Wait for Google Identity Services to load
+            let attempts = 0;
+            while (attempts < 50) {
+                if (typeof google !== 'undefined' && google.accounts?.oauth2) {
+                    break;
+                }
+                await new Promise(r => setTimeout(r, 100));
+                attempts++;
+            }
+            
+            if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_ID.endsWith('.apps.googleusercontent.com')) {
+                console.log('Google Client ID not configured - Google login will prompt for setup');
+                return;
+            }
+            
+            if (typeof google !== 'undefined' && google.accounts?.oauth2) {
+                googleTokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.file',
+                    callback: handleGoogleTokenResponse
+                });
+                console.log('✅ Google Auth initialized');
+            }
+        }
+        
+        async function handleGoogleTokenResponse(tokenResponse) {
+            if (tokenResponse.error) {
+                showAlert('Google sign-in failed: ' + tokenResponse.error, 'error');
+                return;
+            }
+            
+            try {
+                showAlert('🔄 Signing in...', 'success');
+                
+                // Store the token for Drive access
+                localStorage.setItem('google_access_token', tokenResponse.access_token);
+                
+                // Get user profile from Google
+                const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                    headers: { 'Authorization': `Bearer ${tokenResponse.access_token}` }
+                });
+                
+                if (!userInfoResponse.ok) {
+                    throw new Error('Failed to get user info');
+                }
+                
+                const googleUser = await userInfoResponse.json();
+                console.log('Google user:', googleUser);
+                
+                // Create or find user in our system
+                const users = JSON.parse(localStorage.getItem('aweh_users') || '[]');
+                let user = users.find(u => u.email === googleUser.email);
+                let isNewUser = false;
+                
+                if (!user) {
+                    isNewUser = true;
+                    
+                    // Check if there's a pending join code for new Google users
+                    let joinedBusinessId = null;
+                    let joinedBusinessName = null;
+                    
+                    // Ask new user if they have a company code
+                    const companyCode = prompt(
+                        '🎫 Do you have a Company Join Code?\\n\\n' +
+                        'If your company admin gave you a code (like CONI-X7K9-M2PQ), enter it below.\\n\\n' +
+                        'Leave blank to create your own business or skip for now:'
+                    );
+                    
+                    if (companyCode && companyCode.trim()) {
+                        const businesses = JSON.parse(localStorage.getItem('conicore_businesses') || localStorage.getItem('aweh_businesses') || '[]');
+                        const business = businesses.find(b => b.joinCode === companyCode.toUpperCase().trim());
+                        
+                        if (business) {
+                            joinedBusinessId = business.id;
+                            joinedBusinessName = business.name;
+                            
+                            // Add user to authorized users list
+                            if (!business.authorizedUsers) business.authorizedUsers = [];
+                            if (!business.authorizedUsers.includes(googleUser.email)) {
+                                business.authorizedUsers.push(googleUser.email);
+                                localStorage.setItem('conicore_businesses', JSON.stringify(businesses));
+                                localStorage.setItem('aweh_businesses', JSON.stringify(businesses));
+                            }
+                            
+                            localStorage.setItem('conicore_currentBusiness', joinedBusinessId);
+                            localStorage.setItem('aweh_currentBusiness', joinedBusinessId);
+                        } else {
+                            showAlert('⚠️ Invalid code, but you can join later. Creating your account...', 'warning');
+                        }
+                    }
+                    
+                    // New Google user - create account
+                    const isFirstUser = users.length === 0;
+                    user = {
+                        id: Date.now(),
+                        name: googleUser.name || googleUser.email.split('@')[0],
+                        email: googleUser.email,
+                        username: googleUser.email.split('@')[0],
+                        picture: googleUser.picture,
+                        role: isFirstUser ? 'owner' : 'user', // First user is owner
+                        status: isFirstUser ? 'active' : 'pending', // First user auto-approved
+                        termsAccepted: false,
+                        termsAcceptedAt: null,
+                        createdAt: new Date().toISOString(),
+                        provider: 'google',
+                        googleId: googleUser.id,
+                        businessId: joinedBusinessId,
+                        businessAccess: joinedBusinessId ? [joinedBusinessId] : []
+                    };
+                    users.push(user);
+                    localStorage.setItem('aweh_users', JSON.stringify(users));
+                    console.log('✅ New Google user created:', user.email);
+                    
+                    if (!isFirstUser) {
+                        showAlert(`⏳ Account created! Awaiting admin approval.`, 'warning');
+                        return; // Don't proceed until approved
+                    }
+                    
+                    if (joinedBusinessName) {
+                        showAlert(`✅ Signed up & joined "${joinedBusinessName}"!`, 'success');
+                    }
+                } else {
+                    // Check user status for existing users
+                    if (user.status === 'blocked') {
+                        showAlert('⛔ Your account has been blocked. Contact your administrator.', 'error');
+                        return;
+                    }
+                    
+                    if (user.status === 'pending') {
+                        showAlert('⏳ Your account is pending approval. Please wait for admin.', 'warning');
+                        return;
+                    }
+                    
+                    // Update existing user with Google info
+                    user.picture = googleUser.picture;
+                    user.provider = 'google';
+                    user.googleId = googleUser.id;
+                    localStorage.setItem('aweh_users', JSON.stringify(users));
+                }
+                
+                // Save current session
+                localStorage.setItem('aweh_user', JSON.stringify({
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    username: user.username,
+                    picture: user.picture,
+                    role: user.role,
+                    status: user.status || 'active',
+                    termsAccepted: user.termsAccepted || false,
+                    provider: 'google',
+                    googleId: googleUser.id,
+                    loginTime: new Date().toISOString(),
+                    googleToken: tokenResponse.access_token,
+                    businessId: user.businessId,
+                    businessAccess: user.businessAccess
+                }));
+                
+                // Set session time for timeout tracking
+                localStorage.setItem('conicore_session_time', Date.now().toString());
+                
+                // Mark for auto-sync on app load
+                localStorage.setItem('google_auto_sync_pending', 'true');
+                
+                showAlert('✅ Signed in as ' + user.name + '!', 'success');
+                
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = 'COMPLETE-INVOICE-SYSTEM.html';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Google login error:', error);
+                showAlert('Login failed: ' + error.message, 'error');
+            }
+        }
+        
         function loginWithGoogle() {
-            // Placeholder for Google OAuth - Not configured yet
-            showAlert('⚠️ Google login is not configured yet. Please use email/password registration below.', 'info');
+            if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_ID.endsWith('.apps.googleusercontent.com')) {
+                // Show setup instructions
+                const setupClientId = prompt(
+                    '🔧 Google Login Setup Required\n\n' +
+                    'To enable Google login with auto-sync:\n\n' +
+                    '1. Go to console.cloud.google.com\n' +
+                    '2. Create OAuth 2.0 Client ID (Web application)\n' +
+                    '3. Add Authorized JavaScript origins:\n' +
+                    '   - ' + window.location.origin + '\n' +
+                    '4. Add Authorized redirect URIs:\n' +
+                    '   - ' + window.location.origin + '/\n' +
+                    '   - ' + window.location.origin + '/COMPLETE-INVOICE-SYSTEM.html\n' +
+                    '5. Enable Google Drive API\n\n' +
+                    'Paste your Client ID below:',
+                    ''
+                );
+                
+                if (setupClientId && setupClientId.endsWith('.apps.googleusercontent.com')) {
+                    localStorage.setItem('google_drive_client_id', setupClientId);
+                    showAlert('✅ Google Client ID saved! Please click Sign in with Google again.', 'success');
+                    // Reload to reinitialize
+                    setTimeout(() => location.reload(), 1500);
+                } else if (setupClientId) {
+                    showAlert('❌ Invalid Client ID format. It should end with .apps.googleusercontent.com', 'error');
+                }
+                return;
+            }
+            
+            if (!googleTokenClient) {
+                showAlert('⏳ Google Sign-in is loading... Please try again in a moment.', 'info');
+                initGoogleAuth();
+                return;
+            }
+            
+            // Request token (opens Google popup)
+            googleTokenClient.requestAccessToken({ prompt: '' });
         }
 
-        function loginWithMicrosoft() {
-            // Placeholder for Microsoft OAuth - Not configured yet
-            showAlert('⚠️ Microsoft login is not configured yet. Please use email/password registration below.', 'info');
+        // ==================== MICROSOFT AUTH (MSAL) ====================
+        
+        // Microsoft/Azure AD Configuration
+        let MS_CLIENT_ID = localStorage.getItem('microsoft_client_id') || '';
+        let msalInstance = null;
+        
+        // Initialize MSAL
+        function initMicrosoftAuth() {
+            if (!MS_CLIENT_ID) {
+                console.log('Microsoft Client ID not configured');
+                return;
+            }
+            
+            try {
+                const msalConfig = {
+                    auth: {
+                        clientId: MS_CLIENT_ID,
+                        authority: 'https://login.microsoftonline.com/common',
+                        redirectUri: window.location.origin + '/'
+                    },
+                    cache: {
+                        cacheLocation: 'localStorage',
+                        storeAuthStateInCookie: false
+                    }
+                };
+                
+                msalInstance = new msal.PublicClientApplication(msalConfig);
+                console.log('✅ Microsoft MSAL initialized');
+            } catch (error) {
+                console.error('MSAL init error:', error);
+            }
+        }
+        
+        async function loginWithMicrosoft() {
+            if (!MS_CLIENT_ID) {
+                // Show setup instructions
+                const setupClientId = prompt(
+                    '🔧 Microsoft Login Setup Required\n\n' +
+                    'To enable Microsoft login with OneDrive sync:\n\n' +
+                    '1. Go to portal.azure.com > Azure Active Directory\n' +
+                    '2. App Registrations > New registration\n' +
+                    '3. Name: ConiCore Invoicing\n' +
+                    '4. Supported account types: Personal + Work accounts\n' +
+                    '5. Redirect URI (SPA): ' + window.location.origin + '/\n' +
+                    '6. Copy the Application (client) ID\n\n' +
+                    'Paste your Client ID below:',
+                    ''
+                );
+                
+                if (setupClientId && setupClientId.length > 20) {
+                    localStorage.setItem('microsoft_client_id', setupClientId);
+                    MS_CLIENT_ID = setupClientId;
+                    showAlert('✅ Microsoft Client ID saved! Click Sign in with Microsoft again.', 'success');
+                    initMicrosoftAuth();
+                } else if (setupClientId) {
+                    showAlert('❌ Invalid Client ID format.', 'error');
+                }
+                return;
+            }
+            
+            if (!msalInstance) {
+                initMicrosoftAuth();
+                if (!msalInstance) {
+                    showAlert('⚠️ Microsoft authentication not ready. Please try again.', 'error');
+                    return;
+                }
+            }
+            
+            try {
+                // Request scopes for profile and OneDrive
+                const loginRequest = {
+                    scopes: ['User.Read', 'Files.ReadWrite', 'openid', 'profile', 'email']
+                };
+                
+                // Try popup login
+                const response = await msalInstance.loginPopup(loginRequest);
+                
+                if (response && response.account) {
+                    await handleMicrosoftLoginSuccess(response);
+                }
+            } catch (error) {
+                console.error('Microsoft login error:', error);
+                if (error.errorCode === 'popup_window_error') {
+                    showAlert('Please allow popups for Microsoft login.', 'error');
+                } else {
+                    showAlert('Microsoft login failed: ' + (error.message || 'Unknown error'), 'error');
+                }
+            }
+        }
+        
+        async function handleMicrosoftLoginSuccess(response) {
+            try {
+                const account = response.account;
+                
+                // Get user profile from Microsoft Graph
+                const tokenResponse = await msalInstance.acquireTokenSilent({
+                    scopes: ['User.Read'],
+                    account: account
+                });
+                
+                // Fetch user profile
+                const profileResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
+                    headers: {
+                        'Authorization': 'Bearer ' + tokenResponse.accessToken
+                    }
+                });
+                const profile = await profileResponse.json();
+                
+                // Get or create user
+                const users = JSON.parse(localStorage.getItem('conicore_users') || localStorage.getItem('aweh_users') || '[]');
+                let user = users.find(u => u.email === (profile.mail || profile.userPrincipalName));
+                
+                if (!user) {
+                    // Create new user
+                    user = {
+                        id: Date.now(),
+                        name: profile.displayName || account.name,
+                        email: profile.mail || profile.userPrincipalName,
+                        username: (profile.mail || profile.userPrincipalName).split('@')[0],
+                        role: 'user',
+                        status: 'active',
+                        provider: 'microsoft',
+                        microsoftId: account.localAccountId,
+                        createdAt: new Date().toISOString()
+                    };
+                    users.push(user);
+                    localStorage.setItem('conicore_users', JSON.stringify(users));
+                } else {
+                    // Update existing user with Microsoft info
+                    user.microsoftId = account.localAccountId;
+                    user.lastLogin = new Date().toISOString();
+                    const idx = users.findIndex(u => u.id === user.id);
+                    if (idx !== -1) users[idx] = user;
+                    localStorage.setItem('conicore_users', JSON.stringify(users));
+                }
+                
+                // Save session
+                localStorage.setItem('conicore_user', JSON.stringify({
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    username: user.username,
+                    role: user.role,
+                    status: user.status || 'active',
+                    microsoftId: account.localAccountId,
+                    loginTime: new Date().toISOString(),
+                    microsoftToken: tokenResponse.accessToken,
+                    businessId: user.businessId,
+                    businessAccess: user.businessAccess
+                }));
+                
+                // Mark for OneDrive sync
+                localStorage.setItem('onedrive_auto_sync_pending', 'true');
+                
+                showAlert('✅ Signed in as ' + user.name + '!', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'COMPLETE-INVOICE-SYSTEM.html';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Microsoft profile fetch error:', error);
+                showAlert('Login failed: Could not fetch profile.', 'error');
+            }
         }
 
-        // Initialize default admin on page load
-        window.addEventListener('DOMContentLoaded', function() {
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', async function() {
             createDefaultAdmin();
-            console.log('Login page ready. Default admin account available.');
+            await initGoogleAuth();
+            initMicrosoftAuth();
+            console.log('Login page ready.');
         });
     </script>
 </body>

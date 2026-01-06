@@ -1,0 +1,23 @@
+{
+  "name": "cognicore-local-server",
+  "version": "1.0.0",
+  "description": "Local API server for CogniCore Invoice System with Ollama LLM",
+  "main": "local-api-server.js",
+  "scripts": {
+    "start": "node local-api-server.js",
+    "dev": "nodemon local-api-server.js",
+    "serve": "npx serve ../",
+    "setup": "npm install && ollama pull llama3.1:8b"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

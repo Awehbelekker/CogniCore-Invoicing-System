@@ -1,7 +1,7 @@
 {
-  "name": "Aweh Be Lekker Invoice System",
-  "short_name": "Aweh Invoices",
-  "description": "Professional invoicing system for Awake South Africa",
+  "name": "ConiCore Invoicing",
+  "short_name": "ConiCore",
+  "description": "Professional business invoicing and management system",
   "start_url": "/COMPLETE-INVOICE-SYSTEM.html",
   "display": "standalone",
   "background_color": "#0a0e14",
@@ -9,7 +9,7 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

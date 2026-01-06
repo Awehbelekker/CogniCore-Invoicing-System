@@ -1,1 +1,28 @@
+# Vercel
 .vercel
+
+# Environment files (keep secrets safe!)
+.env
+.env.local
+.env*.local
+.env.production
+
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local deployment data (models are large!)
+local-deployment/ollama_data/
+local-deployment/*.sh
+local-deployment/*.ps1

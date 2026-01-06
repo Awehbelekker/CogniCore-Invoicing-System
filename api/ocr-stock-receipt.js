@@ -1,209 +1,369 @@
-// OCR Stock Receipt API - Vercel Serverless Function
-// Uses Together AI Vision to extract information from supplier invoices,
-// customs declarations, delivery notes, shipping invoices, and payment proofs
+/**
+ * Hybrid OCR Stock Receipt API
+ * Primary: HunyuanOCR (92%+ accuracy for receipts/invoices)
+ * Fallback: PaddleOCR → LlamaVision
+ *
+ * Supports: supplier invoices, customs declarations, delivery notes,
+ * shipping invoices, payment proofs
+ */
 
-export default async function handler(req, res) {
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+export const config = {
+  runtime: 'edge',
+};
+
+// Document type specific prompts
+const PROMPTS = {
+  payment: `Extract Proof of Payment data as JSON:
+{
+  "documentType": "payment",
+  "paymentAmount": 0,
+  "paymentDate": "YYYY-MM-DD",
+  "reference": "transaction ID",
+  "paymentMethod": "EFT/card/cash",
+  "currency": "ZAR"
+}`,
+  customs: `Extract Customs Declaration data as JSON:
+{
+  "documentType": "customs",
+  "totalDuties": 0,
+  "importVAT": 0,
+  "currency": "ZAR",
+  "items": [{"hsCode": "", "description": "", "value": 0}],
+  "date": "YYYY-MM-DD"
+}`,
+  shipping: `Extract Shipping Invoice data as JSON:
+{
+  "documentType": "shipping",
+  "supplier": "shipping company",
+  "invoiceNumber": "",
+  "shippingCost": 0,
+  "currency": "ZAR",
+  "date": "YYYY-MM-DD"
+}`,
+  default: `Extract document data as JSON:
+{
+  "documentType": "supplier-invoice/delivery-note/price-list/customs/shipping",
+  "supplier": "company name",
+  "invoiceNumber": "",
+  "date": "YYYY-MM-DD",
+  "dueDate": "YYYY-MM-DD",
+  "currency": "ZAR",
+  "items": [{"sku": "", "description": "", "quantity": 0, "unitPrice": 0, "total": 0}],
+  "subtotal": 0,
+  "vat": 0,
+  "total": 0
+}`
+};
+
+// Currency normalization map
+const CURRENCY_MAP = {
+  'R': 'ZAR', 'RAND': 'ZAR', 'RANDS': 'ZAR',
+  '$': 'USD', 'DOLLAR': 'USD', 'DOLLARS': 'USD',
+  '€': 'EUR', 'EURO': 'EUR', 'EUROS': 'EUR',
+  '£': 'GBP', 'POUND': 'GBP', 'POUNDS': 'GBP',
+  '¥': 'CNY', 'YUAN': 'CNY', 'RMB': 'CNY',
+  'SEK': 'SEK', 'NOK': 'NOK', 'DKK': 'DKK'
+};
+
+/**
+ * Try HunyuanOCR (best for receipts/invoices)
+ */
+async function tryHunyuanOCR(imageBase64, prompt) {
+  const hunyuanUrl = process.env.HUNYUAN_OCR_URL;
+  if (!hunyuanUrl) return null;
+
+  try {
+    const response = await fetch(`${hunyuanUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'tencent/HunyuanOCR',
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}` }},
+            { type: 'text', text: prompt }
+          ]
+        }],
+        temperature: 0.1,
+        max_tokens: 2500
+      })
+    });
+
+    if (!response.ok) return null;
+
+    const result = await response.json();
+    return {
+      text: result.choices[0].message.content,
+      engine: 'hunyuan',
+      accuracy: 0.92
+    };
+  } catch (error) {
+    console.error('HunyuanOCR error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Try PaddleOCR with structure mode
+ */
+async function tryPaddleOCR(imageBase64) {
+  const paddleUrl = process.env.PADDLE_OCR_URL;
+  if (!paddleUrl) return null;
+
+  try {
+    // Clean image data if it has data URL prefix
+    const cleanImage = imageBase64.startsWith('data:')
+      ? imageBase64.split(',')[1]
+      : imageBase64;
+
+    const response = await fetch(`${paddleUrl}/structure`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        file: cleanImage,
+        fileType: 1
+      })
+    });
+
+    if (!response.ok) return null;
+
+    const result = await response.json();
+    const ocrResults = result.result?.ocrResults || [];
+    const avgConfidence = ocrResults.reduce((s, r) => s + (r.confidence || 0.8), 0) / (ocrResults.length || 1);
+
+    return {
+      text: ocrResults.map(r => r.text).join('\n'),
+      structuredData: result.result,
+      engine: 'paddle',
+      accuracy: avgConfidence
+    };
+  } catch (error) {
+    console.error('PaddleOCR error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Fallback to Llama Vision
+ */
+async function tryLlamaVision(imageBase64, prompt, fileName) {
+  const apiKey = process.env.TOGETHER_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const response = await fetch('https://api.together.xyz/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
+        messages: [
+          { role: 'system', content: prompt },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: `Analyze this document${fileName ? ` (${fileName})` : ''} and extract data as JSON:` },
+              { type: 'image_url', image_url: { url: imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}` }}
+            ]
+          }
+        ],
+        max_tokens: 2000,
+        temperature: 0.1
+      })
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return {
+      text: data.choices?.[0]?.message?.content || '',
+      engine: 'llama',
+      accuracy: 0.65
+    };
+  } catch (error) {
+    console.error('LlamaVision error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Parse JSON from OCR text
+ */
+function parseDocumentJSON(text) {
+  if (!text) return null;
+
+  try {
+    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) ||
+                     text.match(/```\n([\s\S]*?)\n```/) ||
+                     text.match(/\{[\s\S]*\}/);
+
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[1] || jsonMatch[0]);
     }
-    
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+  } catch (e) {
+    console.error('JSON parse error:', e.message);
+  }
+
+  return null;
+}
+
+/**
+ * Normalize currency code
+ */
+function normalizeCurrency(currency) {
+  if (!currency) return 'ZAR';
+  const upper = currency.toUpperCase().replace(/[^A-Z]/g, '');
+  return CURRENCY_MAP[upper] || upper || 'ZAR';
+}
+
+/**
+ * Normalize items array
+ */
+function normalizeItems(items) {
+  if (!items || !Array.isArray(items)) return [];
+
+  return items.map(item => ({
+    sku: item.sku || item.code || item.productCode || '',
+    description: item.description || item.name || item.product || '',
+    quantity: parseFloat(item.quantity) || 1,
+    unitPrice: parseFloat(item.unitPrice || item.price || item.unit_price) || 0,
+    total: parseFloat(item.total || item.lineTotal || item.amount) || 0,
+    matchedProduct: null
+  })).map(item => ({
+    ...item,
+    total: item.total || (item.quantity * item.unitPrice)
+  }));
+}
+
+/**
+ * Main Handler - Hybrid OCR for stock receipts
+ */
+export default async function handler(req) {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      }
+    });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response('Method not allowed', { status: 405 });
+  }
+
+  try {
+    const { image, scanType, fileName, forceEngine } = await req.json();
+
+    if (!image) {
+      return new Response(JSON.stringify({
+        error: 'Image data is required'
+      }), { status: 400, headers: { 'Content-Type': 'application/json' }});
     }
-    
-    try {
-        const { image, scanType, fileName } = req.body;
-        
-        if (!image) {
-            return res.status(400).json({ error: 'Image data is required' });
-        }
-        
-        // Use Together AI Vision API (free tier)
-        const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
-        
-        if (!TOGETHER_API_KEY) {
-            // Return mock/empty data if no API key configured
-            return res.status(200).json({
-                documentType: scanType || 'unknown',
-                supplier: '',
-                invoiceNumber: '',
-                date: new Date().toISOString().split('T')[0],
-                dueDate: '',
-                currency: 'ZAR',
-                items: [],
-                total: 0,
-                message: 'AI not configured. Please enter data manually.'
-            });
-        }
-        
-        // Prepare the prompt based on scan type
-        let systemPrompt = '';
-        
-        if (scanType === 'payment') {
-            systemPrompt = `You are analyzing a Proof of Payment (POP) document. Extract:
-- paymentAmount: The amount paid (number only)
-- paymentDate: Date of payment (YYYY-MM-DD format)
-- reference: Bank reference or transaction ID
-- paymentMethod: EFT, card, cash, etc.
 
-Return ONLY valid JSON with these fields.`;
-        } else if (scanType === 'customs') {
-            systemPrompt = `You are analyzing a Customs Declaration document. Extract:
-- documentType: "customs"
-- totalDuties: Total customs duties amount (number)
-- importVAT: Import VAT amount (number)
-- currency: Currency code (e.g., ZAR, USD)
-- items: Array of items with HS codes if visible
-- date: Document date (YYYY-MM-DD)
+    // Get the appropriate prompt
+    const prompt = PROMPTS[scanType] || PROMPTS.default;
 
-Return ONLY valid JSON with these fields.`;
-        } else if (scanType === 'shipping') {
-            systemPrompt = `You are analyzing a Shipping/Freight invoice. Extract:
-- documentType: "shipping"
-- supplier: Shipping company name
-- invoiceNumber: Invoice or bill number
-- shippingCost: Total shipping cost (number)
-- currency: Currency code
-- date: Invoice date (YYYY-MM-DD)
+    const attempts = [];
+    let result = null;
 
-Return ONLY valid JSON with these fields.`;
-        } else {
-            // Default: supplier invoice or auto-detect
-            systemPrompt = `You are analyzing a business document (likely a supplier invoice, delivery note, or price list). Extract ALL information you can find:
+    // Engine order: HunyuanOCR first (92% accuracy on receipts)
+    const engineOrder = forceEngine
+      ? [forceEngine]
+      : ['hunyuan', 'paddle', 'llama'];
 
-- documentType: "supplier-invoice", "delivery-note", "price-list", "customs", "shipping", or "unknown"
-- supplier: Company/supplier name
-- invoiceNumber: Invoice/document number
-- date: Document date (YYYY-MM-DD format)
-- dueDate: Payment due date if visible (YYYY-MM-DD)
-- currency: Currency code (USD, EUR, GBP, ZAR, SEK, CNY, etc.)
-- items: Array of line items, each with:
-  - sku: Product code/SKU if visible
-  - description: Product description
-  - quantity: Quantity (number)
-  - unitPrice: Unit price (number)
-  - total: Line total (number)
-- subtotal: Subtotal amount (number)
-- vat: VAT/Tax amount (number)
-- total: Total amount (number)
+    for (const engine of engineOrder) {
+      if (result) break;
 
-Return ONLY valid JSON with these fields. Use null for fields you cannot determine.`;
-        }
-        
-        const response = await fetch('https://api.together.xyz/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${TOGETHER_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
-                messages: [
-                    {
-                        role: 'system',
-                        content: systemPrompt
-                    },
-                    {
-                        role: 'user',
-                        content: [
-                            {
-                                type: 'text',
-                                text: `Analyze this document${fileName ? ` (${fileName})` : ''} and extract all relevant information as JSON:`
-                            },
-                            {
-                                type: 'image_url',
-                                image_url: {
-                                    url: image
-                                }
-                            }
-                        ]
-                    }
-                ],
-                max_tokens: 2000,
-                temperature: 0.1
-            })
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Together AI error:', errorText);
-            throw new Error('AI Vision API failed');
-        }
-        
-        const data = await response.json();
-        const content = data.choices?.[0]?.message?.content || '{}';
-        
-        // Parse the JSON from the response
-        let extracted;
-        try {
-            // Try to find JSON in the response
-            const jsonMatch = content.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                extracted = JSON.parse(jsonMatch[0]);
-            } else {
-                extracted = JSON.parse(content);
-            }
-        } catch (parseError) {
-            console.error('Failed to parse AI response:', content);
-            extracted = {
-                documentType: scanType || 'unknown',
-                supplier: '',
-                invoiceNumber: '',
-                date: new Date().toISOString().split('T')[0],
-                currency: 'ZAR',
-                items: [],
-                rawResponse: content
-            };
-        }
-        
-        // Ensure items array exists and has proper structure
-        if (extracted.items && Array.isArray(extracted.items)) {
-            extracted.items = extracted.items.map(item => ({
-                sku: item.sku || item.code || item.productCode || '',
-                description: item.description || item.name || item.product || '',
-                quantity: parseFloat(item.quantity) || 1,
-                unitPrice: parseFloat(item.unitPrice || item.price || item.unit_price) || 0,
-                total: parseFloat(item.total || item.lineTotal || item.amount) || 0,
-                matchedProduct: null
-            }));
-            
-            // Calculate totals if not present
-            extracted.items = extracted.items.map(item => ({
-                ...item,
-                total: item.total || (item.quantity * item.unitPrice)
-            }));
-        } else {
-            extracted.items = [];
-        }
-        
-        // Normalize currency
-        if (extracted.currency) {
-            extracted.currency = extracted.currency.toUpperCase().replace(/[^A-Z]/g, '');
-            // Map common variations
-            const currencyMap = {
-                'R': 'ZAR', 'RAND': 'ZAR', 'RANDS': 'ZAR',
-                '$': 'USD', 'DOLLAR': 'USD', 'DOLLARS': 'USD',
-                '€': 'EUR', 'EURO': 'EUR', 'EUROS': 'EUR',
-                '£': 'GBP', 'POUND': 'GBP', 'POUNDS': 'GBP',
-                '¥': 'CNY', 'YUAN': 'CNY', 'RMB': 'CNY'
-            };
-            extracted.currency = currencyMap[extracted.currency] || extracted.currency;
-        }
-        
-        return res.status(200).json(extracted);
-        
-    } catch (error) {
-        console.error('OCR Stock Receipt error:', error);
-        return res.status(500).json({ 
-            error: 'Failed to process document',
-            message: error.message,
-            documentType: 'unknown',
-            items: []
-        });
+      switch (engine) {
+        case 'hunyuan':
+          result = await tryHunyuanOCR(image, prompt);
+          attempts.push({ engine: 'HunyuanOCR', success: !!result });
+          break;
+
+        case 'paddle':
+          result = await tryPaddleOCR(image);
+          attempts.push({ engine: 'PaddleOCR', success: !!result });
+          break;
+
+        case 'llama':
+          result = await tryLlamaVision(image, prompt, fileName);
+          attempts.push({ engine: 'LlamaVision', success: !!result });
+          break;
+      }
     }
+
+    // If no OCR succeeded
+    if (!result) {
+      return new Response(JSON.stringify({
+        documentType: scanType || 'unknown',
+        supplier: '',
+        invoiceNumber: '',
+        date: new Date().toISOString().split('T')[0],
+        currency: 'ZAR',
+        items: [],
+        error: 'All OCR engines failed',
+        attempts,
+        message: 'AI not available. Please enter data manually.'
+      }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
+    // Parse the result
+    let extracted = parseDocumentJSON(result.text);
+
+    if (!extracted) {
+      extracted = {
+        documentType: scanType || 'unknown',
+        supplier: '',
+        invoiceNumber: '',
+        date: new Date().toISOString().split('T')[0],
+        currency: 'ZAR',
+        items: [],
+        rawResponse: result.text
+      };
+    }
+
+    // Normalize the extracted data
+    extracted.items = normalizeItems(extracted.items);
+    extracted.currency = normalizeCurrency(extracted.currency);
+
+    // Add OCR metadata
+    extracted.ocrEngine = result.engine;
+    extracted.ocrAccuracy = result.accuracy;
+    extracted.attempts = attempts;
+
+    return new Response(JSON.stringify(extracted), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+
+  } catch (error) {
+    console.error('OCR Stock Receipt error:', error);
+    return new Response(JSON.stringify({
+      error: 'Failed to process document',
+      message: error.message,
+      documentType: 'unknown',
+      items: []
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
 }

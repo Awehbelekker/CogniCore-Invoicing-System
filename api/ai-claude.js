@@ -6,13 +6,27 @@ export const config = {
   runtime: 'edge',
 };
 
+// CORS headers for all responses
+const corsHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 export default async function handler(req) {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers: corsHeaders });
+  }
+  
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   }
 
   try {
-    const { action, customer, invoice, context, message, customerHistory, business, apiKey } = await req.json();
+    const body = await req.json();
+    const { action, customer, invoice, context, message, customerHistory, business, apiKey } = body;
 
     // Get API key from request or environment
     const claudeApiKey = apiKey || process.env.ANTHROPIC_API_KEY;
@@ -20,11 +34,11 @@ export default async function handler(req) {
     if (!claudeApiKey) {
       return new Response(JSON.stringify({
         error: 'Claude API key not configured',
-        message: 'Please add your Anthropic API key in Settings → AI Settings',
+        message: 'Please add your Anthropic API key in Settings → AI Settings or set ANTHROPIC_API_KEY env variable',
         source: 'error'
       }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: corsHeaders
       });
     }
 
@@ -49,18 +63,19 @@ export default async function handler(req) {
 
     return new Response(JSON.stringify(response), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: corsHeaders
     });
 
   } catch (error) {
     console.error('Claude AI error:', error);
     return new Response(JSON.stringify({
-      error: error.message,
-      message: 'AI request failed. Please check your API key.',
+      error: error.message || 'Unknown error',
+      message: 'AI request failed. Check console for details.',
+      stack: error.stack,
       source: 'error'
     }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: corsHeaders
     });
   }
 }
@@ -88,7 +103,7 @@ Customer History:
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 300,
       messages: [{
         role: 'user',
@@ -130,7 +145,7 @@ async function generateInsights(apiKey, context) {
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 500,
       messages: [{
         role: 'user',
@@ -180,7 +195,7 @@ async function generateRecommendations(apiKey, customer, customerHistory, contex
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 300,
       messages: [{
         role: 'user',
@@ -229,7 +244,7 @@ Current Business State:
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 400,
       system: `You are an intelligent assistant for an invoice management system (Aweh Be Lekker Invoice System).
 You help with: creating invoices, checking status, finding data, sending reminders, product recommendations, business insights.
@@ -243,7 +258,8 @@ Be concise, helpful, and action-oriented. Use friendly South African surfer vibe
   });
 
   if (!response.ok) {
-    throw new Error(`Claude API error: ${response.status}`);
+    const errorBody = await response.text();
+    throw new Error(`Claude API error: ${response.status} - ${errorBody}`);
   }
 
   const data = await response.json();

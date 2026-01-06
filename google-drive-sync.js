@@ -29,6 +29,8 @@ class GoogleDriveStorage {
         this.folderName = 'Aweh Invoice System';
         this.folderId = null;
         this.disabled = !savedClientId; // Disabled until Client ID is configured
+        this.lastError = null; // Track last error for diagnostics
+        this.initAttempts = 0; // Track initialization attempts
 
         this.tokenClient = null;
         this._initPromise = null;
@@ -37,6 +39,26 @@ class GoogleDriveStorage {
         // Listen for online/offline events
         window.addEventListener('online', () => this.handleOnline());
         window.addEventListener('offline', () => this.handleOffline());
+
+        // Log initialization status for debugging
+        console.log('[GoogleDriveStorage] Initialized with Client ID:', savedClientId ? 'Configured' : 'Not configured');
+    }
+
+    /**
+     * Get detailed status for diagnostics
+     */
+    getStatus() {
+        return {
+            clientConfigured: this.isClientConfigured(),
+            isSignedIn: this.isSignedIn,
+            isOnline: this.isOnline,
+            disabled: this.disabled,
+            folderId: this.folderId,
+            lastError: this.lastError,
+            initAttempts: this.initAttempts,
+            gapiLoaded: typeof gapi !== 'undefined',
+            gisLoaded: typeof google !== 'undefined' && google.accounts?.oauth2 !== undefined
+        };
     }
 
     async waitForIdentityServices(timeoutMs = 8000) {
@@ -65,13 +87,18 @@ class GoogleDriveStorage {
     async init() {
         if (this._initPromise) return this._initPromise;
 
+        this.initAttempts++;
+        console.log(`[GoogleDriveStorage] Init attempt ${this.initAttempts}`);
+
         this._initPromise = new Promise((resolve, reject) => {
-            const timeoutMs = 6000;
+            const timeoutMs = 8000; // Increased timeout for slower connections
             let settled = false;
             const doneResolve = () => {
                 if (settled) return;
                 settled = true;
                 clearTimeout(timeoutId);
+                this.lastError = null;
+                console.log('[GoogleDriveStorage] Initialization successful');
                 resolve();
             };
             const doneReject = (err) => {
@@ -80,15 +107,19 @@ class GoogleDriveStorage {
                 clearTimeout(timeoutId);
                 // Allow retries after failure
                 this._initPromise = null;
+                this.lastError = err.message || String(err);
+                console.error('[GoogleDriveStorage] Initialization failed:', this.lastError);
                 reject(err);
             };
 
             const timeoutId = setTimeout(() => {
-                doneReject(new Error(`Google Drive init timed out after ${timeoutMs}ms`));
+                const status = this.getStatus();
+                const errMsg = `Google Drive init timed out after ${timeoutMs}ms. Status: GAPI=${status.gapiLoaded}, GIS=${status.gisLoaded}`;
+                doneReject(new Error(errMsg));
             }, timeoutMs);
 
             if (typeof gapi === 'undefined') {
-                doneReject(new Error('Google API library (gapi) not loaded'));
+                doneReject(new Error('Google API library (gapi) not loaded. Please check your internet connection or try refreshing the page.'));
                 return;
             }
 
