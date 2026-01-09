@@ -16,9 +16,8 @@
 
 class GoogleDriveStorage {
     constructor() {
-        // Load Client ID from localStorage (configured via setup guide)
-        const savedClientId = localStorage.getItem('google_drive_client_id');
-        this.CLIENT_ID = savedClientId || null; // No default - must be configured first
+        // Google OAuth Client ID - configured for production
+        this.CLIENT_ID = '845662826428-auigm9h60hpfi2658v63ihjqtqff4e70.apps.googleusercontent.com';
         this.API_KEY = ''; // Not required for Drive API with OAuth
         this.DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
         this.SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -28,7 +27,7 @@ class GoogleDriveStorage {
         this.syncQueue = [];
         this.folderName = 'Aweh Invoice System';
         this.folderId = null;
-        this.disabled = !savedClientId; // Disabled until Client ID is configured
+        this.disabled = false; // Always enabled with hardcoded Client ID
         this.lastError = null; // Track last error for diagnostics
         this.initAttempts = 0; // Track initialization attempts
 
@@ -41,7 +40,7 @@ class GoogleDriveStorage {
         window.addEventListener('offline', () => this.handleOffline());
 
         // Log initialization status for debugging
-        console.log('[GoogleDriveStorage] Initialized with Client ID:', savedClientId ? 'Configured' : 'Not configured');
+        console.log('[GoogleDriveStorage] Initialized with Client ID');
     }
 
     /**

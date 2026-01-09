@@ -995,7 +995,7 @@
         }
 
         // Google OAuth Configuration
-        const GOOGLE_CLIENT_ID = localStorage.getItem('google_drive_client_id') || '';
+        const GOOGLE_CLIENT_ID = '845662826428-auigm9h60hpfi2658v63ihjqtqff4e70.apps.googleusercontent.com';
         let googleTokenClient = null;
         
         async function initGoogleAuth() {
@@ -1008,19 +1008,16 @@
                 await new Promise(r => setTimeout(r, 100));
                 attempts++;
             }
-            
-            if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_ID.endsWith('.apps.googleusercontent.com')) {
-                console.log('Google Client ID not configured - Google login will prompt for setup');
-                return;
-            }
-            
+
             if (typeof google !== 'undefined' && google.accounts?.oauth2) {
                 googleTokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: GOOGLE_CLIENT_ID,
                     scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.file',
                     callback: handleGoogleTokenResponse
                 });
-                console.log('✅ Google Auth initialized');
+                console.log('✅ Google Auth initialized with Client ID');
+            } else {
+                console.error('❌ Google Identity Services failed to load');
             }
         }
         
@@ -1177,40 +1174,12 @@
         }
         
         function loginWithGoogle() {
-            if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_ID.endsWith('.apps.googleusercontent.com')) {
-                // Show setup instructions
-                const setupClientId = prompt(
-                    '🔧 Google Login Setup Required\n\n' +
-                    'To enable Google login with auto-sync:\n\n' +
-                    '1. Go to console.cloud.google.com\n' +
-                    '2. Create OAuth 2.0 Client ID (Web application)\n' +
-                    '3. Add Authorized JavaScript origins:\n' +
-                    '   - ' + window.location.origin + '\n' +
-                    '4. Add Authorized redirect URIs:\n' +
-                    '   - ' + window.location.origin + '/\n' +
-                    '   - ' + window.location.origin + '/COMPLETE-INVOICE-SYSTEM.html\n' +
-                    '5. Enable Google Drive API\n\n' +
-                    'Paste your Client ID below:',
-                    ''
-                );
-                
-                if (setupClientId && setupClientId.endsWith('.apps.googleusercontent.com')) {
-                    localStorage.setItem('google_drive_client_id', setupClientId);
-                    showAlert('✅ Google Client ID saved! Please click Sign in with Google again.', 'success');
-                    // Reload to reinitialize
-                    setTimeout(() => location.reload(), 1500);
-                } else if (setupClientId) {
-                    showAlert('❌ Invalid Client ID format. It should end with .apps.googleusercontent.com', 'error');
-                }
-                return;
-            }
-            
             if (!googleTokenClient) {
                 showAlert('⏳ Google Sign-in is loading... Please try again in a moment.', 'info');
                 initGoogleAuth();
                 return;
             }
-            
+
             // Request token (opens Google popup)
             googleTokenClient.requestAccessToken({ prompt: '' });
         }
