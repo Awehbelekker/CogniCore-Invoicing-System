@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google OAuth Setup - CogniCore</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .setup-container {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #1a1a2e;
+            text-align: center;
+        }
+
+        .emoji {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .step {
+            background: #f8fafc;
+            border-left: 4px solid #667eea;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .step h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .step p {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .code {
+            background: #1a1a2e;
+            color: #00ff88;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+            word-break: break-all;
+        }
+
+        .input-group {
+            margin: 2rem 0;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 0.5rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .success {
+            background: #10b981;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="emoji">🔧</div>
+        <h1>Google OAuth Setup</h1>
+        
+        <div class="step">
+            <h3>Step 1: Configure Consent Screen</h3>
+            <p>Go to <a href="https://console.cloud.google.com/apis/credentials/consent?project=cognicore-invoicing-system" target="_blank" class="link">Google Cloud Console</a></p>
+            <p>• Select "External" user type</p>
+            <p>• App name: <strong>CogniCore Invoicing System</strong></p>
+            <p>• Add your email as support email</p>
+            <p>• Add authorized domain: <span class="code">vercel.app</span></p>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Create OAuth Client ID</h3>
+            <p>Go to <a href="https://console.cloud.google.com/apis/credentials?project=cognicore-invoicing-system" target="_blank" class="link">Credentials</a></p>
+            <p>• Click "+ CREATE CREDENTIALS" → "OAuth client ID"</p>
+            <p>• Application type: <strong>Web application</strong></p>
+            <p>• Name: <strong>CogniCore Web Client</strong></p>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Add Authorized Origins & Redirect URIs</h3>
+            <p><strong>Authorized JavaScript origins:</strong></p>
+            <div class="code">https://cogni-core-invoicing-system-fu6y.vercel.app</div>
+            
+            <p style="margin-top: 1rem;"><strong>Authorized redirect URIs:</strong></p>
+            <div class="code">https://cogni-core-invoicing-system-fu6y.vercel.app</div>
+            <div class="code">https://cogni-core-invoicing-system-fu6y.vercel.app/</div>
+        </div>
+
+        <div class="step">
+            <h3>Step 4: Copy Your Client ID</h3>
+            <p>After creating, you'll see a popup with your Client ID.</p>
+            <p>It looks like: <span class="code">123456789-abc123.apps.googleusercontent.com</span></p>
+            <p><strong>Copy it and paste below:</strong></p>
+        </div>
+
+        <div class="input-group">
+            <label for="clientId">Google Client ID:</label>
+            <input 
+                type="text" 
+                id="clientId" 
+                placeholder="123456789-abc123.apps.googleusercontent.com"
+                value=""
+            >
+        </div>
+
+        <button class="btn" onclick="saveClientId()">✓ Save & Go to Login</button>
+        
+        <div class="success" id="success">
+            ✅ Saved! Redirecting to login page...
+        </div>
+    </div>
+
+    <script>
+        // Check if already configured
+        const existingClientId = localStorage.getItem('google_drive_client_id');
+        if (existingClientId) {
+            document.getElementById('clientId').value = existingClientId;
+        }
+
+        function saveClientId() {
+            const clientId = document.getElementById('clientId').value.trim();
+            
+            if (!clientId) {
+                alert('❌ Please enter your Google Client ID');
+                return;
+            }
+
+            if (!clientId.endsWith('.apps.googleusercontent.com')) {
+                alert('❌ Invalid Client ID format. It should end with .apps.googleusercontent.com');
+                return;
+            }
+
+            // Save to localStorage
+            localStorage.setItem('google_drive_client_id', clientId);
+            
+            // Show success message
+            document.getElementById('success').style.display = 'block';
+            
+            // Redirect to login page
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('clientId').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                saveClientId();
+            }
+        });
+    </script>
+</body>
+</html>
+
