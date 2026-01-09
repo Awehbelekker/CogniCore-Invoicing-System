@@ -2,6 +2,12 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../stride payment system"
+		},
+		{
+			"path": "../../OneDrive - ITEC Group/Desktop/CogniCore"
 		}
 	],
 	"settings": {}

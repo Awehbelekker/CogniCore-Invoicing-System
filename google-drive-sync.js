@@ -416,6 +416,40 @@ class GoogleDriveStorage {
     }
 
     /**
+     * List JSON files in the app folder
+     */
+    async listJsonFiles() {
+        if (!this.isSignedIn) return [];
+
+        try {
+            await this.ensureFolder();
+            if (!this.folderId) return [];
+
+            const files = [];
+            let pageToken = undefined;
+
+            do {
+                const response = await gapi.client.drive.files.list({
+                    q: `'${this.folderId}' in parents and trashed=false and name contains '.json'`,
+                    fields: 'nextPageToken, files(id, name, modifiedTime)',
+                    spaces: 'drive',
+                    pageSize: 1000,
+                    pageToken
+                });
+
+                const pageFiles = response?.result?.files || [];
+                files.push(...pageFiles);
+                pageToken = response?.result?.nextPageToken;
+            } while (pageToken);
+
+            return files;
+        } catch (error) {
+            console.error('Error listing JSON files:', error);
+            return [];
+        }
+    }
+
+    /**
      * Create file in Google Drive
      */
     async createFile(filename, content) {
@@ -652,36 +686,39 @@ class GoogleDriveStorage {
 
         this.updateSyncStatus('⬇️ Pulling data from Google Drive...', 'info');
 
-        const keys = [
-            'aweh_invoices',
-            'aweh_customers',
-            'aweh_products',
-            'aweh_suppliers',
-            'aweh_transactions',
-            'aweh_settings',
-            'aweh_favorites',
-            'aweh_businesses'
-        ];
+        const files = await this.listJsonFiles();
+        const jsonFiles = files.filter(f => typeof f?.name === 'string' && f.name.endsWith('.json'));
 
         let downloadedCount = 0;
+        let skippedCount = 0;
 
-        for (const key of keys) {
+        for (const file of jsonFiles) {
+            const key = file.name.replace(/\.json$/i, '');
+
+            // Only pull application data keys
+            if (!key.startsWith('aweh_')) {
+                skippedCount++;
+                continue;
+            }
+
             try {
-                // Get data from Drive
-                const driveData = await this.getItem(key, null);
-                
-                if (driveData !== null) {
-                    // Update localStorage with Drive data
-                    localStorage.setItem(key, JSON.stringify(driveData));
-                    downloadedCount++;
-                    console.log(`✅ Downloaded ${key} from Drive`);
+                const content = await this.downloadFile(file.id);
+                if (!content) {
+                    skippedCount++;
+                    continue;
                 }
+
+                const parsed = JSON.parse(content);
+                localStorage.setItem(key, JSON.stringify(parsed));
+                downloadedCount++;
+                console.log(`✅ Downloaded ${key} from Drive`);
             } catch (error) {
                 console.error(`Error downloading ${key}:`, error);
             }
         }
 
-        console.log(`✅ Downloaded ${downloadedCount} files from Google Drive`);
+        this.updateSyncStatus(`✅ Pulled ${downloadedCount} files`, 'success');
+        console.log(`✅ Downloaded ${downloadedCount} files from Google Drive (skipped ${skippedCount})`);
     }
 
     /**
@@ -695,33 +732,42 @@ class GoogleDriveStorage {
 
         this.updateSyncStatus('🔄 Syncing all data...', 'info');
 
-        const keys = [
-            'aweh_invoices',
-            'aweh_customers',
-            'aweh_products',
-            'aweh_suppliers',
-            'aweh_transactions',
-            'aweh_settings',
-            'aweh_favorites',
-            'aweh_businesses'
-        ];
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key) continue;
+            if (!key.startsWith('aweh_')) continue;
+            keys.push(key);
+        }
 
         let syncedCount = 0;
+        let skippedCount = 0;
 
         for (const key of keys) {
-            const data = localStorage.getItem(key);
+            const raw = localStorage.getItem(key);
+            if (raw == null) {
+                skippedCount++;
+                continue;
+            }
 
-            if (data) {
+            try {
+                // Most app keys store JSON; some keys may store plain strings
+                let value;
                 try {
-                    await this.setItem(key, JSON.parse(data));
-                    syncedCount++;
-                } catch (error) {
-                    console.error(`Error syncing ${key}:`, error);
+                    value = JSON.parse(raw);
+                } catch {
+                    value = raw;
                 }
+
+                await this.setItem(key, value);
+                syncedCount++;
+            } catch (error) {
+                console.error(`Error syncing ${key}:`, error);
             }
         }
 
         this.updateSyncStatus(`✅ Synced ${syncedCount} files`, 'success');
+        console.log(`✅ Synced ${syncedCount} files to Google Drive (skipped ${skippedCount})`);
     }
 
     /**

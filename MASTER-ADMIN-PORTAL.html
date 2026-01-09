@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Admin Portal - Aweh Invoice System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .change {
+            font-size: 14px;
+            color: #10b981;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .panel {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .panel h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .business-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .business-item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .business-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.1);
+        }
+
+        .business-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .business-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .business-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .commission-control {
+            margin-bottom: 20px;
+        }
+
+        .commission-control label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .commission-control input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔐 Master Admin Portal</h1>
+            <p>Platform-wide management and commission control</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Businesses</h3>
+                <div class="value" id="totalBusinesses">0</div>
+                <div class="change">+0 this month</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Revenue</h3>
+                <div class="value" id="totalRevenue">R 0</div>
+                <div class="change">Platform commission</div>
+            </div>
+            <div class="stat-card">
+                <h3>Active Invoices</h3>
+                <div class="value" id="activeInvoices">0</div>
+                <div class="change">Across all businesses</div>
+            </div>
+            <div class="stat-card">
+                <h3>Commission Rate</h3>
+                <div class="value" id="commissionRate">0.5%</div>
+                <div class="change">Platform fee</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Business Management -->
+            <div class="panel">
+                <h2>📊 All Businesses</h2>
+                <div id="alertContainer"></div>
+                <div class="business-list" id="businessList">
+                    <!-- Businesses will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Commission Control -->
+            <div class="panel">
+                <h2>⚙️ Platform Settings</h2>
+
+                <div class="commission-control">
+                    <label>Global Commission Rate (%)</label>
+                    <input type="number" id="globalCommission" value="0.5" step="0.1" min="0" max="100">
+                    <button class="btn btn-primary" onclick="updateGlobalCommission()" style="margin-top: 10px; width: 100%;">
+                        Update Commission Rate
+                    </button>
+                </div>
+
+                <div class="commission-control">
+                    <label>Platform Statistics</label>
+                    <div style="padding: 15px; background: #f9fafb; border-radius: 8px; margin-top: 10px;">
+                        <p style="margin-bottom: 10px;"><strong>Total Transactions:</strong> <span id="totalTransactions">0</span></p>
+                        <p style="margin-bottom: 10px;"><strong>Total Commission Earned:</strong> R <span id="totalCommission">0.00</span></p>
+                        <p style="margin-bottom: 10px;"><strong>Average Transaction:</strong> R <span id="avgTransaction">0.00</span></p>
+                        <p><strong>Active Stripe Accounts:</strong> <span id="activeStripeAccounts">0</span></p>
+                    </div>
+                </div>
+
+                <div class="commission-control">
+                    <label>Quick Actions</label>
+                    <button class="btn btn-success" onclick="exportAllData()" style="width: 100%; margin-bottom: 10px;">
+                        📥 Export All Business Data
+                    </button>
+                    <button class="btn btn-primary" onclick="viewPaymentLogs()" style="width: 100%; margin-bottom: 10px;">
+                        📋 View Payment Logs
+                    </button>
+                    <button class="btn btn-primary" onclick="generateReport()" style="width: 100%;">
+                        📊 Generate Platform Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Business Details Modal -->
+    <div class="modal" id="businessModal">
+        <div class="modal-content">
+            <h3>Business Details</h3>
+            <div id="businessDetails"></div>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="closeModal()">Close</button>
+                <button class="btn btn-danger" onclick="suspendBusiness()">Suspend Business</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Master Admin Data
+        let businesses = [];
+        let platformStats = {
+            totalBusinesses: 0,
+            totalRevenue: 0,
+            activeInvoices: 0,
+            commissionRate: 0.5,
+            totalTransactions: 0,
+            totalCommission: 0,
+            avgTransaction: 0,
+            activeStripeAccounts: 0
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBusinesses();
+            loadPlatformStats();
+        });
+
+        // Load all businesses
+        function loadBusinesses() {
+            // In production, this would fetch from your database
+            // For now, we'll load from localStorage
+            const allBusinesses = JSON.parse(localStorage.getItem('aweh_all_businesses') || '[]');
+
+            businesses = allBusinesses.length > 0 ? allBusinesses : [
+                {
+                    id: 'BUS-001',
+                    name: 'Aweh Be Lekker',
+                    email: 'info@awehbelekker.co.za',
+                    stripeAccountId: 'acct_xxxxx',
+                    status: 'active',
+                    totalInvoices: 45,
+                    totalRevenue: 125000,
+                    commission: 625,
+                    createdAt: '2024-01-15'
+                },
+                {
+                    id: 'BUS-002',
+                    name: 'Sample Business 2',
+                    email: 'contact@sample2.com',
+                    stripeAccountId: 'acct_yyyyy',
+                    status: 'active',
+                    totalInvoices: 23,
+                    totalRevenue: 67000,
+                    commission: 335,
+                    createdAt: '2024-02-20'
+                }
+            ];
+
+            renderBusinesses();
+            updateStats();
+        }
+
+        // Render businesses
+        function renderBusinesses() {
+            const container = document.getElementById('businessList');
+
+            if (businesses.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">No businesses registered yet</p>';
+                return;
+            }
+
+            container.innerHTML = businesses.map(business => `
+                <div class="business-item">
+                    <div class="business-name">${business.name}</div>
+                    <div class="business-info">
+                        📧 ${business.email} | 🆔 ${business.id}
+                    </div>
+                    <div class="business-stats">
+                        <span>📄 ${business.totalInvoices} invoices</span>
+                        <span>💰 R ${business.totalRevenue.toLocaleString()}</span>
+                        <span>💵 R ${business.commission.toFixed(2)} commission</span>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button class="btn btn-primary" onclick="viewBusiness('${business.id}')" style="font-size: 12px; padding: 6px 12px;">
+                            View Details
+                        </button>
+                        <span style="margin-left: 10px; padding: 4px 8px; background: #10b981; color: white; border-radius: 4px; font-size: 11px;">
+                            ${business.status.toUpperCase()}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update platform stats
+        function updateStats() {
+            platformStats.totalBusinesses = businesses.length;
+            platformStats.totalRevenue = businesses.reduce((sum, b) => sum + b.totalRevenue, 0);
+            platformStats.activeInvoices = businesses.reduce((sum, b) => sum + b.totalInvoices, 0);
+            platformStats.totalCommission = businesses.reduce((sum, b) => sum + b.commission, 0);
+            platformStats.totalTransactions = platformStats.activeInvoices;
+            platformStats.avgTransaction = platformStats.totalRevenue / platformStats.totalTransactions || 0;
+            platformStats.activeStripeAccounts = businesses.filter(b => b.stripeAccountId).length;
+
+            // Update UI
+            document.getElementById('totalBusinesses').textContent = platformStats.totalBusinesses;
+            document.getElementById('totalRevenue').textContent = 'R ' + platformStats.totalCommission.toLocaleString();
+            document.getElementById('activeInvoices').textContent = platformStats.activeInvoices;
+            document.getElementById('commissionRate').textContent = platformStats.commissionRate + '%';
+            document.getElementById('totalTransactions').textContent = platformStats.totalTransactions;
+            document.getElementById('totalCommission').textContent = platformStats.totalCommission.toFixed(2);
+            document.getElementById('avgTransaction').textContent = platformStats.avgTransaction.toFixed(2);
+            document.getElementById('activeStripeAccounts').textContent = platformStats.activeStripeAccounts;
+        }
+
+        // Load platform stats
+        function loadPlatformStats() {
+            const savedStats = localStorage.getItem('aweh_platform_stats');
+            if (savedStats) {
+                platformStats = JSON.parse(savedStats);
+                document.getElementById('globalCommission').value = platformStats.commissionRate;
+            }
+        }
+
+        // Update global commission rate
+        function updateGlobalCommission() {
+            const newRate = parseFloat(document.getElementById('globalCommission').value);
+
+            if (newRate < 0 || newRate > 100) {
+                showAlert('Commission rate must be between 0% and 100%', 'danger');
+                return;
+            }
+
+            platformStats.commissionRate = newRate;
+            localStorage.setItem('aweh_platform_stats', JSON.stringify(platformStats));
+
+            showAlert(`✅ Global commission rate updated to ${newRate}%`, 'success');
+            updateStats();
+        }
+
+        // View business details
+        function viewBusiness(businessId) {
+            const business = businesses.find(b => b.id === businessId);
+            if (!business) return;
+
+            const details = `
+                <div style="margin-bottom: 15px;">
+                    <strong>Business Name:</strong> ${business.name}<br>
+                    <strong>Email:</strong> ${business.email}<br>
+                    <strong>Business ID:</strong> ${business.id}<br>
+                    <strong>Stripe Account:</strong> ${business.stripeAccountId}<br>
+                    <strong>Status:</strong> ${business.status}<br>
+                    <strong>Created:</strong> ${business.createdAt}<br>
+                    <strong>Total Invoices:</strong> ${business.totalInvoices}<br>
+                    <strong>Total Revenue:</strong> R ${business.totalRevenue.toLocaleString()}<br>
+                    <strong>Commission Paid:</strong> R ${business.commission.toFixed(2)}
+                </div>
+            `;
+
+            document.getElementById('businessDetails').innerHTML = details;
+            document.getElementById('businessModal').classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('businessModal').classList.remove('active');
+        }
+
+        // Suspend business
+        function suspendBusiness() {
+            if (confirm('Are you sure you want to suspend this business?')) {
+                showAlert('✅ Business suspended successfully', 'success');
+                closeModal();
+            }
+        }
+
+        // Export all data
+        function exportAllData() {
+            const data = {
+                businesses,
+                platformStats,
+                exportedAt: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `platform-data-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showAlert('✅ Platform data exported successfully', 'success');
+        }
+
+        // View payment logs
+        function viewPaymentLogs() {
+            showAlert('📋 Payment logs feature coming soon', 'success');
+        }
+
+        // Generate report
+        function generateReport() {
+            const report = `
+PLATFORM REPORT
+Generated: ${new Date().toLocaleString()}
+
+OVERVIEW
+========
+Total Businesses: ${platformStats.totalBusinesses}
+Active Invoices: ${platformStats.activeInvoices}
+Total Revenue: R ${platformStats.totalRevenue.toLocaleString()}
+Total Commission: R ${platformStats.totalCommission.toFixed(2)}
+Commission Rate: ${platformStats.commissionRate}%
+
+BUSINESS BREAKDOWN
+==================
+${businesses.map(b => `
+${b.name}
+- Invoices: ${b.totalInvoices}
+- Revenue: R ${b.totalRevenue.toLocaleString()}
+- Commission: R ${b.commission.toFixed(2)}
+- Status: ${b.status}
+`).join('\n')}
+            `.trim();
+
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `platform-report-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showAlert('✅ Platform report generated successfully', 'success');
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

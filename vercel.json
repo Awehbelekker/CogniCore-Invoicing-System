@@ -6,6 +6,14 @@
   "rewrites": [
     {
       "source": "/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/app",
       "destination": "/COMPLETE-INVOICE-SYSTEM.html"
     }
   ],

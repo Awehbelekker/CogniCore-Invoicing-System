@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - ConiCore Invoicing</title>
+    <title>CogniCore - AI-Powered Invoicing</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
     <style>
         * {
             margin: 0;
@@ -12,53 +13,109 @@
         }
 
         :root {
-            --primary: #00d4ff;
-            --secondary: #ff006e;
-            --accent: #7209b7;
-            --success: #06ffa5;
-            --dark: #0a0e27;
-            --darker: #050714;
-            --light: #e0e7ff;
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --success: #10b981;
+            --dark: #1a1a2e;
+            --darker: #0f0f1e;
+            --light: #f8fafc;
+            --text-light: #e2e8f0;
+            --text-muted: #94a3b8;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
-            color: var(--light);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #4facfe);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated background particles */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
         }
 
         .login-container {
-            max-width: 450px;
+            max-width: 480px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 2px solid rgba(0, 212, 255, 0.3);
-            padding: 3rem;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 0.6s ease-out;
         }
 
         .logo {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
         }
 
         .logo h1 {
-            font-size: 2rem;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
+            letter-spacing: -1px;
         }
 
         .logo p {
-            font-size: 0.9rem;
-            opacity: 0.7;
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 500;
         }
 
         .form-group {
@@ -67,82 +124,134 @@
 
         .form-label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             font-weight: 600;
-            color: var(--light);
+            color: var(--dark);
+            font-size: 0.95rem;
         }
 
         .form-control {
             width: 100%;
-            padding: 0.75rem 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: var(--light);
+            padding: 1rem 1.25rem;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            color: var(--dark);
             font-size: 1rem;
             transition: all 0.3s ease;
+            font-family: inherit;
         }
 
         .form-control:focus {
             outline: none;
             border-color: var(--primary);
-            background: rgba(255, 255, 255, 0.15);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
         }
 
         .btn {
             width: 100%;
-            padding: 0.875rem;
+            padding: 1rem 1.5rem;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
         }
 
         .btn-google {
             background: white;
-            color: #333;
-            margin-bottom: 0.75rem;
+            color: #1f2937;
+            margin-bottom: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            border: 2px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .btn-google:hover {
-            background: #f8f9fa;
+            background: #f9fafb;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .btn-microsoft {
-            background: #2f2f2f;
+            background: #2d2d2d;
             color: white;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .btn-microsoft:hover {
-            background: #404040;
+            background: #3d3d3d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .sync-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #f0fdf4;
+            border-radius: 8px;
+            border: 1px solid #86efac;
         }
 
         .divider {
             text-align: center;
-            margin: 1.5rem 0;
+            margin: 2rem 0;
             position: relative;
         }
 
@@ -153,50 +262,55 @@
             top: 50%;
             width: 100%;
             height: 1px;
-            background: rgba(255, 255, 255, 0.2);
+            background: #e2e8f0;
         }
 
         .divider span {
-            background: var(--dark);
-            padding: 0 1rem;
+            background: white;
+            padding: 0 1.5rem;
             position: relative;
-            color: rgba(255, 255, 255, 0.6);
+            color: var(--text-muted);
             font-size: 0.9rem;
+            font-weight: 600;
         }
 
         .links {
             text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.9rem;
+            margin-top: 2rem;
+            font-size: 0.95rem;
         }
 
         .links a {
             color: var(--primary);
             text-decoration: none;
             font-weight: 600;
+            transition: color 0.3s ease;
         }
 
         .links a:hover {
+            color: var(--primary-dark);
             text-decoration: underline;
         }
 
         .alert {
-            padding: 0.75rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
             display: none;
+            font-weight: 500;
+            animation: fadeInUp 0.3s ease-out;
         }
 
         .alert-error {
-            background: rgba(247, 37, 133, 0.2);
-            border: 1px solid var(--secondary);
-            color: var(--secondary);
+            background: #fef2f2;
+            border: 2px solid #fecaca;
+            color: #dc2626;
         }
 
         .alert-success {
-            background: rgba(6, 255, 165, 0.2);
-            border: 1px solid var(--success);
-            color: var(--success);
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            color: #16a34a;
         }
 
         .remember-forgot {
@@ -207,13 +321,81 @@
             font-size: 0.9rem;
         }
 
-        .remember-forgot input {
-            margin-right: 0.5rem;
+        .remember-forgot label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--dark);
+            cursor: pointer;
+        }
+
+        .remember-forgot input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
 
         .remember-forgot a {
             color: var(--primary);
             text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .remember-forgot a:hover {
+            color: var(--primary-dark);
+        }
+
+        .features {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .features h3 {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--dark);
+        }
+
+        .feature-icon {
+            font-size: 1.25rem;
+        }
+
+        @media (max-width: 640px) {
+            .login-container {
+                padding: 2rem 1.5rem;
+            }
+
+            .logo h1 {
+                font-size: 2rem;
+            }
+
+            .logo-icon {
+                font-size: 3rem;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
     <!-- Google Identity Services -->
@@ -225,24 +407,29 @@
 <body>
     <div class="login-container">
         <div class="logo" id="platformLogo">
-            <h1>📊 ConiCore</h1>
-            <p>Professional Invoicing System</p>
+            <div class="logo-icon">🧠</div>
+            <h1>CogniCore</h1>
+            <p>AI-Powered Invoicing System</p>
         </div>
 
         <div id="alertBox" class="alert"></div>
 
         <div id="loginForm">
             <!-- Google Login - Primary Method -->
-            <button class="btn btn-google" onclick="loginWithGoogle()" id="googleLoginBtn" style="font-weight: 600;">
+            <button class="btn btn-google" onclick="loginWithGoogle()" id="googleLoginBtn">
                 <svg width="20" height="20" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                🔐 Sign in with Google (Recommended)
+                Sign in with Google
             </button>
-            <p style="text-align: center; font-size: 0.8rem; opacity: 0.7; margin: 0.5rem 0 1rem;">✅ Auto-syncs to your private Google Drive</p>
+            <div style="text-align: center;">
+                <span class="sync-badge">
+                    ✅ Auto-syncs to your private Google Drive
+                </span>
+            </div>
 
             <button class="btn btn-microsoft" onclick="loginWithMicrosoft()" id="microsoftLoginBtn">
                 <svg width="20" height="20" viewBox="0 0 23 23">
@@ -252,32 +439,26 @@
                     <path fill="#05a6f0" d="M1 12h10v10H1z"/>
                     <path fill="#ffba08" d="M12 12h10v10H12z"/>
                 </svg>
-                🔐 Sign in with Microsoft
+                Sign in with Microsoft
             </button>
-            <p style="text-align: center; font-size: 0.8rem; opacity: 0.7; margin: 0.5rem 0 1rem;">☁️ Optional OneDrive sync available</p>
+            <div style="text-align: center; margin-bottom: 1rem;">
+                <span class="sync-badge" style="background: #eff6ff; border-color: #93c5fd;">
+                    ☁️ Optional OneDrive sync available
+                </span>
+            </div>
 
             <div class="divider"><span>OR</span></div>
-
-            <!-- Login with Code Option -->
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                <button type="button" class="btn btn-outline" id="tabEmailLogin" onclick="showEmailLogin()" style="flex: 1; padding: 0.6rem; font-size: 0.85rem; background: rgba(102, 126, 234, 0.2);">
-                    ✉️ Email Login
-                </button>
-                <button type="button" class="btn btn-outline" id="tabCodeLogin" onclick="showCodeLogin()" style="flex: 1; padding: 0.6rem; font-size: 0.85rem;">
-                    🎫 Login Code
-                </button>
-            </div>
 
             <!-- Email/Password Login Form -->
             <form onsubmit="handleLogin(event)" id="emailLoginForm">
                 <div class="form-group">
                     <label class="form-label">Email or Username</label>
-                    <input type="text" class="form-control" id="loginEmail" placeholder="Enter your email" required>
+                    <input type="text" class="form-control" id="loginEmail" placeholder="you@example.com" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password" required>
+                    <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required>
                 </div>
 
                 <div class="remember-forgot">
@@ -287,31 +468,34 @@
                     <a href="#" onclick="showForgotPassword()">Forgot password?</a>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Login</button>
-            </form>
-            
-            <!-- Login Code Form -->
-            <form onsubmit="handleCodeLogin(event)" id="codeLoginForm" style="display: none;">
-                <div style="background: rgba(102, 126, 234, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center;">
-                    <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">🎫 Got a login code from your admin?</p>
-                    <p style="font-size: 0.8rem; opacity: 0.7;">Enter your code and temporary password below</p>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Login Code</label>
-                    <input type="text" class="form-control" id="loginCode" placeholder="e.g., ABC123" style="text-transform: uppercase; font-family: monospace; letter-spacing: 2px; text-align: center; font-size: 1.2rem;" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Temporary Password</label>
-                    <input type="password" class="form-control" id="loginCodePassword" placeholder="Enter your temp password" required>
-                </div>
-
-                <button type="submit" class="btn btn-primary">🔓 Login with Code</button>
+                <button type="submit" class="btn btn-primary">Sign In</button>
             </form>
 
             <div class="links">
-                Don't have an account? <a href="#" onclick="showRegister()">Sign up</a>
+                Don't have an account? <a href="#" onclick="showRegister()">Create account</a>
+            </div>
+
+            <!-- Features Section -->
+            <div class="features">
+                <h3>Why CogniCore?</h3>
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <span class="feature-icon">🤖</span>
+                        <span>AI-Powered</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">☁️</span>
+                        <span>Cloud Sync</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">📱</span>
+                        <span>Mobile Ready</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">🔒</span>
+                        <span>Secure</span>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -451,10 +635,8 @@
         // Run on load
         loadLoginBranding();
         
-        // Check if user is already logged in
-        if (localStorage.getItem('conicore_user') || localStorage.getItem('aweh_user')) {
-            window.location.href = 'COMPLETE-INVOICE-SYSTEM.html';
-        }
+        // NOTE: Session check moved to checkExistingSession() which validates session timeout properly
+        // Do NOT auto-redirect here - let the DOMContentLoaded handler do proper validation
 
         function showAlert(message, type = 'error') {
             const alertBox = document.getElementById('alertBox');
@@ -1165,8 +1347,41 @@
             }
         }
 
+        // Check for existing valid session
+        function checkExistingSession() {
+            const currentUser = JSON.parse(localStorage.getItem('conicore_user') || localStorage.getItem('aweh_user') || 'null');
+            
+            if (!currentUser) {
+                console.log('🔐 No existing session, showing login page');
+                return false;
+            }
+            
+            // Check session timeout (24 hours)
+            const sessionTime = localStorage.getItem('conicore_session_time');
+            const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
+            
+            if (sessionTime && (Date.now() - parseInt(sessionTime)) > SESSION_TIMEOUT) {
+                // Session expired - clear all session data
+                console.log('⏰ Session expired, clearing data');
+                localStorage.removeItem('aweh_user');
+                localStorage.removeItem('conicore_user');
+                localStorage.removeItem('conicore_session_time');
+                return false;
+            }
+            
+            // Valid session exists - redirect to app
+            console.log('✅ Valid session found, redirecting to app...');
+            window.location.href = 'COMPLETE-INVOICE-SYSTEM.html';
+            return true;
+        }
+
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', async function() {
+            // Check for existing valid session first
+            if (checkExistingSession()) {
+                return; // Will redirect to app
+            }
+            
             createDefaultAdmin();
             await initGoogleAuth();
             initMicrosoftAuth();
