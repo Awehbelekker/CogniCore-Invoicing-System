@@ -14093,14 +14093,15 @@ Customers: ${company.customerCount || 0}
                 const extractedData = extractDataFromText(cleaned, detectedType);
                 console.log('Extracted data:', extractedData);
                 
-                const result = {
+                // Reassign result instead of redeclaring
+                result = {
                     success: true,
                     detectedType: detectedType,
                     data: extractedData,
                     rawText: cleaned,
                     requestedType: (window.quickScanContext && window.quickScanContext.type) ? window.quickScanContext.type : 'auto',
                     source: 'local-ocr',
-                    confidence: result.data.confidence || 'unknown'
+                    confidence: extractedData.confidence || 'unknown'
                 };
                 
                 console.log('Local OCR result:', result);
@@ -26009,7 +26010,12 @@ This action cannot be undone.`;
             
             // Run diagnostics after a short delay to ensure all scripts are loaded
             setTimeout(() => {
-                testScannerComponents();
+                // Check if testScannerComponents is defined before calling
+                if (typeof testScannerComponents === 'function') {
+                    testScannerComponents();
+                } else {
+                    console.warn('testScannerComponents function not yet defined');
+                }
                 
                 // Test if Quick Scan button works
                 const quickScanButton = document.querySelector('[onclick*="quickScanModal"]');
