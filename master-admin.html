@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Admin Portal - CogniCore</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1a1a2e;
+            --light: #f8fafc;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .admin-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2rem 1rem;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .change {
+            font-size: 0.85rem;
+        }
+
+        .change.positive {
+            color: var(--success);
+        }
+
+        .change.negative {
+            color: var(--danger);
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .badge-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .badge-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 2rem;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 2px solid var(--primary);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Search Bar */
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-bar input {
+            flex: 1;
+        }
+
+        /* Grid Layout */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Color Picker */
+        input[type="color"] {
+            height: 50px;
+            cursor: pointer;
+        }
+
+        /* File Upload */
+        .file-upload {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            padding: 2rem;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .file-upload input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span>🧠</span>
+                <span>CogniCore Admin</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link active" onclick="showSection('dashboard')">
+                        <span>📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('pending-clients')">
+                        <span>⏳</span>
+                        <span>Pending Clients</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('users')">
+                        <span>👥</span>
+                        <span>User Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('companies')">
+                        <span>🏢</span>
+                        <span>Companies</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('branding')">
+                        <span>🎨</span>
+                        <span>Branding Tools</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('templates')">
+                        <span>📄</span>
+                        <span>Templates</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('system')">
+                        <span>⚙️</span>
+                        <span>System Config</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('blocked')">
+                        <span>🚫</span>
+                        <span>Blocked Clients</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <div class="header">
+                    <h1>Master Admin Dashboard</h1>
+                    <button class="btn btn-primary" onclick="refreshDashboard()">🔄 Refresh</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Clients</h3>
+                        <div class="value" id="totalClients">0</div>
+                        <div class="change positive">+12% this month</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pending Approvals</h3>
+                        <div class="value" id="pendingApprovals">0</div>
+                        <div class="change warning">Requires attention</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Users</h3>
+                        <div class="value" id="activeUsers">0</div>
+                        <div class="change positive">+8% this week</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Monthly Revenue</h3>
+                        <div class="value" id="monthlyRevenue">R 0</div>
+                        <div class="change positive">+24% this month</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📈 Recent Activity</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Event</th>
+                                    <th>User</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activityLog">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; opacity: 0.5;">No recent activity</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pending Clients Section -->
+            <section id="pending-clients" class="content-section">
+                <div class="header">
+                    <h1>⏳ Pending Client Approvals</h1>
+                    <button class="btn btn-primary" onclick="loadPendingClients()">🔄 Refresh</button>
+                </div>
+
+                <div class="card">
+                    <h2>New Applications</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Company</th>
+                                    <th>Contact</th>
+                                    <th>Email</th>
+                                    <th>Plan</th>
+                                    <th>Price</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingClientsTable">
+                                <tr>
+                                    <td colspan="8" style="text-align: center; opacity: 0.5;">No pending applications</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- User Management Section -->
+            <section id="users" class="content-section">
+                <div class="header">
+                    <h1>👥 User Management</h1>
+                    <button class="btn btn-primary" onclick="openModal('createUserModal')">➕ Create User</button>
+                </div>
+
+                <div class="card">
+                    <div class="search-bar">
+                        <input type="text" class="form-control" placeholder="Search users..." id="userSearch" onkeyup="searchUsers()">
+                        <button class="btn btn-primary">🔍 Search</button>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Company</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTable">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; opacity: 0.5;">No users found</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Companies Section -->
+            <section id="companies" class="content-section">
+                <div class="header">
+                    <h1>🏢 Company Management</h1>
+                    <button class="btn btn-primary" onclick="openModal('createCompanyModal')">➕ Create Company</button>
+                </div>
+
+                <div class="card">
+                    <div class="search-bar">
+                        <input type="text" class="form-control" placeholder="Search companies..." id="companySearch">
+                        <button class="btn btn-primary">🔍 Search</button>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Company ID</th>
+                                    <th>Name</th>
+                                    <th>Plan</th>
+                                    <th>Users</th>
+                                    <th>Status</th>
+                                    <th>Billing</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="companiesTable">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; opacity: 0.5;">No companies found</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Branding Tools Section -->
+            <section id="branding" class="content-section">
+                <div class="header">
+                    <h1>🎨 Branding & Customization</h1>
+                </div>
+
+                <div class="card">
+                    <h2>Company Branding Editor</h2>
+                    <div class="form-group">
+                        <label>Select Company</label>
+                        <select class="form-control" id="brandingCompanySelect" onchange="loadCompanyBranding()">
+                            <option value="">-- Select Company --</option>
+                        </select>
+                    </div>
+
+                    <div id="brandingEditor" style="display: none;">
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>Company Logo</label>
+                                <div class="file-upload" onclick="document.getElementById('logoUpload').click()">
+                                    <input type="file" id="logoUpload" accept="image/*" onchange="uploadLogo(event)">
+                                    <p>📤 Click to upload logo</p>
+                                    <p style="font-size: 0.85rem; opacity: 0.7;">PNG, JPG up to 5MB</p>
+                                </div>
+                                <div id="logoPreview" style="margin-top: 1rem;"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Primary Color</label>
+                                <input type="color" class="form-control" id="primaryColor" value="#667eea">
+
+                                <label style="margin-top: 1rem;">Secondary Color</label>
+                                <input type="color" class="form-control" id="secondaryColor" value="#764ba2">
+
+                                <label style="margin-top: 1rem;">Accent Color</label>
+                                <input type="color" class="form-control" id="accentColor" value="#10b981">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Company Tagline</label>
+                            <input type="text" class="form-control" id="companyTagline" placeholder="Your business tagline">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email Signature</label>
+                            <textarea class="form-control" id="emailSignature" rows="4" placeholder="Custom email signature for invoices"></textarea>
+                        </div>
+
+                        <button class="btn btn-success" onclick="saveBranding()">💾 Save Branding</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Templates Section -->
+            <section id="templates" class="content-section">
+                <div class="header">
+                    <h1>📄 Invoice Templates</h1>
+                    <button class="btn btn-primary" onclick="openModal('createTemplateModal')">➕ Create Template</button>
+                </div>
+
+                <div class="card">
+                    <h2>Available Templates</h2>
+                    <div id="templatesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <!-- Templates will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- System Configuration Section -->
+            <section id="system" class="content-section">
+                <div class="header">
+                    <h1>⚙️ System Configuration</h1>
+                </div>
+
+                <div class="card">
+                    <h2>Platform Settings</h2>
+
+                    <div class="form-group">
+                        <label>Platform Commission Rate (%)</label>
+                        <input type="number" class="form-control" id="commissionRate" value="0.5" step="0.1" min="0" max="100">
+                        <small style="opacity: 0.7;">Current: 0.5% per transaction</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Default Currency</label>
+                        <select class="form-control" id="defaultCurrency">
+                            <option value="ZAR">ZAR - South African Rand</option>
+                            <option value="USD">USD - US Dollar</option>
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="GBP">GBP - British Pound</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Stripe API Key</label>
+                        <input type="password" class="form-control" id="stripeApiKey" placeholder="sk_live_...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Google Drive Integration</label>
+                        <select class="form-control" id="googleDriveEnabled">
+                            <option value="true">Enabled</option>
+                            <option value="false">Disabled</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Auto-Block Non-Payment (days)</label>
+                        <input type="number" class="form-control" id="autoBlockDays" value="30" min="1">
+                        <small style="opacity: 0.7;">Automatically block clients after X days of non-payment</small>
+                    </div>
+
+                    <button class="btn btn-success" onclick="saveSystemConfig()">💾 Save Configuration</button>
+                </div>
+            </section>
+
+            <!-- Blocked Clients Section -->
+            <section id="blocked" class="content-section">
+                <div class="header">
+                    <h1>🚫 Blocked Clients</h1>
+                </div>
+
+                <div class="card">
+                    <h2>Blocked Accounts</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Company</th>
+                                    <th>Reason</th>
+                                    <th>Blocked Date</th>
+                                    <th>Outstanding</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="blockedClientsTable">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; opacity: 0.5;">No blocked clients</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Create User Modal -->
+    <div id="createUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Create New User</h2>
+                <button class="modal-close" onclick="closeModal('createUserModal')">×</button>
+            </div>
+            <form onsubmit="createUser(event)">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" class="form-control" id="newUserName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Address *</label>
+                    <input type="email" class="form-control" id="newUserEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" class="form-control" id="newUserPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>Company *</label>
+                    <select class="form-control" id="newUserCompany" required>
+                        <option value="">-- Select Company --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select class="form-control" id="newUserRole" required>
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                        <option value="master_admin">Master Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">Create User</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Company Modal -->
+    <div id="createCompanyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🏢 Create New Company</h2>
+                <button class="modal-close" onclick="closeModal('createCompanyModal')">×</button>
+            </div>
+            <form onsubmit="createCompany(event)">
+                <div class="form-group">
+                    <label>Company Name *</label>
+                    <input type="text" class="form-control" id="newCompanyName" required>
+                </div>
+                <div class="form-group">
+                    <label>Registration Number</label>
+                    <input type="text" class="form-control" id="newCompanyReg">
+                </div>
+                <div class="form-group">
+                    <label>Subscription Plan *</label>
+                    <select class="form-control" id="newCompanyPlan" required>
+                        <option value="starter">Starter - R 299/month</option>
+                        <option value="professional">Professional - R 599/month</option>
+                        <option value="enterprise">Enterprise - R 1,499/month</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Contact Email *</label>
+                    <input type="email" class="form-control" id="newCompanyEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Contact Phone</label>
+                    <input type="tel" class="form-control" id="newCompanyPhone">
+                </div>
+                <button type="submit" class="btn btn-success">Create Company</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Edit User</h2>
+                <button class="modal-close" onclick="closeModal('editUserModal')">×</button>
+            </div>
+            <form onsubmit="updateUser(event)">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" class="form-control" id="editUserName">
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" class="form-control" id="editUserEmail">
+                </div>
+                <div class="form-group">
+                    <label>New Password (leave blank to keep current)</label>
+                    <input type="password" class="form-control" id="editUserPassword">
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select class="form-control" id="editUserRole">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                        <option value="master_admin">Master Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select class="form-control" id="editUserStatus">
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
+                        <option value="blocked">Blocked</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">Update User</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Approve Client Modal -->
+    <div id="approveClientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✅ Approve Client Application</h2>
+                <button class="modal-close" onclick="closeModal('approveClientModal')">×</button>
+            </div>
+            <div id="approveClientDetails"></div>
+            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <button class="btn btn-success" onclick="approveClient()">✅ Approve & Send Invoice</button>
+                <button class="btn btn-danger" onclick="rejectClient()">❌ Reject Application</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentClientId = null;
+        let allUsers = [];
+        let allCompanies = [];
+
+        // Initialize dashboard
+        function initDashboard() {
+            loadPendingClients();
+            loadUsers();
+            loadCompanies();
+            updateStats();
+            loadActivityLog();
+        }
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+
+            // Add active class to clicked nav link
+            event.target.closest('.nav-link').classList.add('active');
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Load pending clients
+        function loadPendingClients() {
+            const pendingClients = JSON.parse(localStorage.getItem('cognicore_pending_clients') || '[]');
+            const tbody = document.getElementById('pendingClientsTable');
+
+            if (pendingClients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; opacity: 0.5;">No pending applications</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pendingClients.map(client => `
+                <tr>
+                    <td>${client.id}</td>
+                    <td>${client.companyName}</td>
+                    <td>${client.contactName}</td>
+                    <td>${client.email}</td>
+                    <td><span class="badge badge-primary">${client.plan}</span></td>
+                    <td>R ${client.price}</td>
+                    <td>${new Date(client.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-success btn-sm" onclick="showApprovalModal('${client.id}')">✅ Approve</button>
+                            <button class="btn btn-danger btn-sm" onclick="rejectApplication('${client.id}')">❌ Reject</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('pendingApprovals').textContent = pendingClients.length;
+        }
+
+        // Show approval modal
+        function showApprovalModal(clientId) {
+            const pendingClients = JSON.parse(localStorage.getItem('cognicore_pending_clients') || '[]');
+            const client = pendingClients.find(c => c.id === clientId);
+
+            if (!client) return;
+
+            currentClientId = clientId;
+
+            document.getElementById('approveClientDetails').innerHTML = `
+                <div style="background: rgba(102, 126, 234, 0.1); padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <h3 style="margin-bottom: 1rem;">Client Details</h3>
+                    <p><strong>Company:</strong> ${client.companyName}</p>
+                    <p><strong>Contact:</strong> ${client.contactName}</p>
+                    <p><strong>Email:</strong> ${client.email}</p>
+                    <p><strong>Phone:</strong> ${client.phone}</p>
+                    <p><strong>Plan:</strong> ${client.plan}</p>
+                    <p><strong>Price:</strong> R ${client.price}/month</p>
+                    ${client.requirements ? `<p><strong>Requirements:</strong> ${client.requirements}</p>` : ''}
+                </div>
+            `;
+
+            openModal('approveClientModal');
+        }
+
+        // Approve client
+        function approveClient() {
+            const pendingClients = JSON.parse(localStorage.getItem('cognicore_pending_clients') || '[]');
+            const clientIndex = pendingClients.findIndex(c => c.id === currentClientId);
+
+            if (clientIndex === -1) return;
+
+            const client = pendingClients[clientIndex];
+
+            // Create company
+            const companies = JSON.parse(localStorage.getItem('cognicore_companies') || '[]');
+            const newCompany = {
+                id: 'COMP-' + Date.now(),
+                name: client.companyName,
+                email: client.email,
+                phone: client.phone,
+                plan: client.plan,
+                price: client.price,
+                status: 'pending_payment',
+                createdAt: new Date().toISOString(),
+                approvedAt: new Date().toISOString()
+            };
+            companies.push(newCompany);
+            localStorage.setItem('cognicore_companies', JSON.stringify(companies));
+
+            // Remove from pending
+            pendingClients.splice(clientIndex, 1);
+            localStorage.setItem('cognicore_pending_clients', JSON.stringify(pendingClients));
+
+            // In production, this would:
+            // 1. Create Stripe invoice
+            // 2. Send email with payment link
+            // 3. Set up company account
+
+            alert(`✅ Client Approved!\n\nCompany: ${client.companyName}\nInvoice sent to: ${client.email}\n\nThe client will receive a payment link via email.`);
+
+            closeModal('approveClientModal');
+            loadPendingClients();
+            loadCompanies();
+        }
+
+        // Reject application
+        function rejectApplication(clientId) {
+            if (!confirm('Are you sure you want to reject this application?')) return;
+
+            const pendingClients = JSON.parse(localStorage.getItem('cognicore_pending_clients') || '[]');
+            const filtered = pendingClients.filter(c => c.id !== clientId);
+            localStorage.setItem('cognicore_pending_clients', JSON.stringify(filtered));
+
+            alert('❌ Application rejected');
+            loadPendingClients();
+        }
+
+        // Load users
+        function loadUsers() {
+            const users = JSON.parse(localStorage.getItem('cognicore_users') || '[]');
+            allUsers = users;
+
+            const tbody = document.getElementById('usersTable');
+
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; opacity: 0.5;">No users found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td>${user.company || 'N/A'}</td>
+                    <td><span class="badge badge-primary">${user.role}</span></td>
+                    <td><span class="badge badge-${user.status === 'active' ? 'success' : 'danger'}">${user.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-warning btn-sm" onclick="editUser('${user.id}')">✏️ Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteUser('${user.id}')">🗑️ Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('activeUsers').textContent = users.filter(u => u.status === 'active').length;
+        }
+
+        // Create user
+        function createUser(event) {
+            event.preventDefault();
+
+            const users = JSON.parse(localStorage.getItem('cognicore_users') || '[]');
+
+            const newUser = {
+                id: 'USER-' + Date.now(),
+                name: document.getElementById('newUserName').value,
+                email: document.getElementById('newUserEmail').value,
+                password: document.getElementById('newUserPassword').value, // In production, hash this!
+                company: document.getElementById('newUserCompany').value,
+                role: document.getElementById('newUserRole').value,
+                status: 'active',
+                createdAt: new Date().toISOString()
+            };
+
+            users.push(newUser);
+            localStorage.setItem('cognicore_users', JSON.stringify(users));
+
+            alert('✅ User created successfully!');
+            closeModal('createUserModal');
+            loadUsers();
+            event.target.reset();
+        }
+
+        // Edit user
+        function editUser(userId) {
+            const users = JSON.parse(localStorage.getItem('cognicore_users') || '[]');
+            const user = users.find(u => u.id === userId);
+
+            if (!user) return;
+
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editUserName').value = user.name;
+            document.getElementById('editUserEmail').value = user.email;
+            document.getElementById('editUserRole').value = user.role;
+            document.getElementById('editUserStatus').value = user.status;
+
+            openModal('editUserModal');
+        }
+
+        // Update user
+        function updateUser(event) {
+            event.preventDefault();
+
+            const users = JSON.parse(localStorage.getItem('cognicore_users') || '[]');
+            const userId = document.getElementById('editUserId').value;
+            const userIndex = users.findIndex(u => u.id === userId);
+
+            if (userIndex === -1) return;
+
+            users[userIndex].name = document.getElementById('editUserName').value;
+            users[userIndex].email = document.getElementById('editUserEmail').value;
+            users[userIndex].role = document.getElementById('editUserRole').value;
+            users[userIndex].status = document.getElementById('editUserStatus').value;
+
+            const newPassword = document.getElementById('editUserPassword').value;
+            if (newPassword) {
+                users[userIndex].password = newPassword; // In production, hash this!
+            }
+
+            localStorage.setItem('cognicore_users', JSON.stringify(users));
+
+            alert('✅ User updated successfully!');
+            closeModal('editUserModal');
+            loadUsers();
+        }
+
+        // Delete user
+        function deleteUser(userId) {
+            if (!confirm('Are you sure you want to delete this user?')) return;
+
+            const users = JSON.parse(localStorage.getItem('cognicore_users') || '[]');
+            const filtered = users.filter(u => u.id !== userId);
+            localStorage.setItem('cognicore_users', JSON.stringify(filtered));
+
+            alert('✅ User deleted');
+            loadUsers();
+        }
+
+        // Load companies
+        function loadCompanies() {
+            const companies = JSON.parse(localStorage.getItem('cognicore_companies') || '[]');
+            allCompanies = companies;
+
+            const tbody = document.getElementById('companiesTable');
+
+            if (companies.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; opacity: 0.5;">No companies found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = companies.map(company => `
+                <tr>
+                    <td>${company.id}</td>
+                    <td>${company.name}</td>
+                    <td><span class="badge badge-primary">${company.plan}</span></td>
+                    <td>${company.userCount || 0}</td>
+                    <td><span class="badge badge-${company.status === 'active' ? 'success' : 'warning'}">${company.status}</span></td>
+                    <td>R ${company.price}/mo</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-warning btn-sm" onclick="editCompany('${company.id}')">✏️ Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="blockCompany('${company.id}')">🚫 Block</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('totalClients').textContent = companies.length;
+
+            // Populate company selects
+            const companySelects = ['newUserCompany', 'brandingCompanySelect'];
+            companySelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">-- Select Company --</option>' +
+                        companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                }
+            });
+        }
+
+        // Create company
+        function createCompany(event) {
+            event.preventDefault();
+
+            const companies = JSON.parse(localStorage.getItem('cognicore_companies') || '[]');
+
+            const newCompany = {
+                id: 'COMP-' + Date.now(),
+                name: document.getElementById('newCompanyName').value,
+                registration: document.getElementById('newCompanyReg').value,
+                plan: document.getElementById('newCompanyPlan').value,
+                email: document.getElementById('newCompanyEmail').value,
+                phone: document.getElementById('newCompanyPhone').value,
+                status: 'active',
+                price: document.getElementById('newCompanyPlan').value === 'starter' ? 299 :
+                       document.getElementById('newCompanyPlan').value === 'professional' ? 599 : 1499,
+                createdAt: new Date().toISOString()
+            };
+
+            companies.push(newCompany);
+            localStorage.setItem('cognicore_companies', JSON.stringify(companies));
+
+            alert('✅ Company created successfully!');
+            closeModal('createCompanyModal');
+            loadCompanies();
+            event.target.reset();
+        }
+
+        // Block company
+        function blockCompany(companyId) {
+            if (!confirm('Are you sure you want to block this company?')) return;
+
+            const companies = JSON.parse(localStorage.getItem('cognicore_companies') || '[]');
+            const companyIndex = companies.findIndex(c => c.id === companyId);
+
+            if (companyIndex === -1) return;
+
+            companies[companyIndex].status = 'blocked';
+            companies[companyIndex].blockedAt = new Date().toISOString();
+            companies[companyIndex].blockReason = 'Non-payment';
+
+            localStorage.setItem('cognicore_companies', JSON.stringify(companies));
+
+            // Add to blocked list
+            const blockedClients = JSON.parse(localStorage.getItem('cognicore_blocked_clients') || '[]');
+            blockedClients.push(companies[companyIndex]);
+            localStorage.setItem('cognicore_blocked_clients', JSON.stringify(blockedClients));
+
+            alert('🚫 Company blocked');
+            loadCompanies();
+            loadBlockedClients();
+        }
+
+        // Load blocked clients
+        function loadBlockedClients() {
+            const blockedClients = JSON.parse(localStorage.getItem('cognicore_blocked_clients') || '[]');
+            const tbody = document.getElementById('blockedClientsTable');
+
+            if (blockedClients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; opacity: 0.5;">No blocked clients</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = blockedClients.map(client => `
+                <tr>
+                    <td>${client.name}</td>
+                    <td>${client.blockReason || 'Non-payment'}</td>
+                    <td>${new Date(client.blockedAt).toLocaleDateString()}</td>
+                    <td>R ${client.price || 0}</td>
+                    <td>
+                        <button class="btn btn-success btn-sm" onclick="unblockClient('${client.id}')">✅ Unblock</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Unblock client
+        function unblockClient(clientId) {
+            if (!confirm('Unblock this client?')) return;
+
+            const blockedClients = JSON.parse(localStorage.getItem('cognicore_blocked_clients') || '[]');
+            const filtered = blockedClients.filter(c => c.id !== clientId);
+            localStorage.setItem('cognicore_blocked_clients', JSON.stringify(filtered));
+
+            // Update company status
+            const companies = JSON.parse(localStorage.getItem('cognicore_companies') || '[]');
+            const companyIndex = companies.findIndex(c => c.id === clientId);
+            if (companyIndex !== -1) {
+                companies[companyIndex].status = 'active';
+                delete companies[companyIndex].blockedAt;
+                delete companies[companyIndex].blockReason;
+                localStorage.setItem('cognicore_companies', JSON.stringify(companies));
+            }
+
+            alert('✅ Client unblocked');
+            loadBlockedClients();
+            loadCompanies();
+        }
+
+        // Branding functions
+        function loadCompanyBranding() {
+            const companyId = document.getElementById('brandingCompanySelect').value;
+            if (!companyId) {
+                document.getElementById('brandingEditor').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('brandingEditor').style.display = 'block';
+
+            // Load existing branding if available
+            const branding = JSON.parse(localStorage.getItem(`branding_${companyId}`) || '{}');
+
+            if (branding.primaryColor) document.getElementById('primaryColor').value = branding.primaryColor;
+            if (branding.secondaryColor) document.getElementById('secondaryColor').value = branding.secondaryColor;
+            if (branding.accentColor) document.getElementById('accentColor').value = branding.accentColor;
+            if (branding.tagline) document.getElementById('companyTagline').value = branding.tagline;
+            if (branding.emailSignature) document.getElementById('emailSignature').value = branding.emailSignature;
+            if (branding.logo) {
+                document.getElementById('logoPreview').innerHTML = `<img src="${branding.logo}" style="max-width: 200px; border-radius: 8px;">`;
+            }
+        }
+
+        function uploadLogo(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('logoPreview').innerHTML = `<img src="${e.target.result}" style="max-width: 200px; border-radius: 8px;">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveBranding() {
+            const companyId = document.getElementById('brandingCompanySelect').value;
+            if (!companyId) return;
+
+            const branding = {
+                primaryColor: document.getElementById('primaryColor').value,
+                secondaryColor: document.getElementById('secondaryColor').value,
+                accentColor: document.getElementById('accentColor').value,
+                tagline: document.getElementById('companyTagline').value,
+                emailSignature: document.getElementById('emailSignature').value,
+                logo: document.getElementById('logoPreview').querySelector('img')?.src || null,
+                updatedAt: new Date().toISOString()
+            };
+
+            localStorage.setItem(`branding_${companyId}`, JSON.stringify(branding));
+
+            alert('✅ Branding saved successfully!');
+        }
+
+        // System configuration
+        function saveSystemConfig() {
+            const config = {
+                commissionRate: document.getElementById('commissionRate').value,
+                defaultCurrency: document.getElementById('defaultCurrency').value,
+                stripeApiKey: document.getElementById('stripeApiKey').value,
+                googleDriveEnabled: document.getElementById('googleDriveEnabled').value,
+                autoBlockDays: document.getElementById('autoBlockDays').value,
+                updatedAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('cognicore_system_config', JSON.stringify(config));
+
+            alert('✅ System configuration saved!');
+        }
+
+        // Load system config
+        function loadSystemConfig() {
+            const config = JSON.parse(localStorage.getItem('cognicore_system_config') || '{}');
+
+            if (config.commissionRate) document.getElementById('commissionRate').value = config.commissionRate;
+            if (config.defaultCurrency) document.getElementById('defaultCurrency').value = config.defaultCurrency;
+            if (config.stripeApiKey) document.getElementById('stripeApiKey').value = config.stripeApiKey;
+            if (config.googleDriveEnabled) document.getElementById('googleDriveEnabled').value = config.googleDriveEnabled;
+            if (config.autoBlockDays) document.getElementById('autoBlockDays').value = config.autoBlockDays;
+        }
+
+        // Update stats
+        function updateStats() {
+            const companies = JSON.parse(localStorage.getItem('cognicore_companies') || '[]');
+            const users = JSON.parse(localStorage.getItem('cognicore_users') || '[]');
+            const pending = JSON.parse(localStorage.getItem('cognicore_pending_clients') || '[]');
+
+            document.getElementById('totalClients').textContent = companies.length;
+            document.getElementById('pendingApprovals').textContent = pending.length;
+            document.getElementById('activeUsers').textContent = users.filter(u => u.status === 'active').length;
+
+            const totalRevenue = companies.reduce((sum, c) => sum + (c.price || 0), 0);
+            document.getElementById('monthlyRevenue').textContent = 'R ' + totalRevenue.toLocaleString();
+        }
+
+        // Activity log
+        function loadActivityLog() {
+            const activities = JSON.parse(localStorage.getItem('cognicore_activity_log') || '[]');
+            const tbody = document.getElementById('activityLog');
+
+            if (activities.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; opacity: 0.5;">No recent activity</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = activities.slice(0, 10).map(activity => `
+                <tr>
+                    <td>${new Date(activity.timestamp).toLocaleString()}</td>
+                    <td>${activity.event}</td>
+                    <td>${activity.user}</td>
+                    <td><span class="badge badge-${activity.status === 'success' ? 'success' : 'warning'}">${activity.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // Refresh dashboard
+        function refreshDashboard() {
+            initDashboard();
+            alert('✅ Dashboard refreshed!');
+        }
+
+        // Search users
+        function searchUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const filtered = allUsers.filter(user =>
+                user.name.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm) ||
+                (user.company && user.company.toLowerCase().includes(searchTerm))
+            );
+
+            const tbody = document.getElementById('usersTable');
+            tbody.innerHTML = filtered.map(user => `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td>${user.company || 'N/A'}</td>
+                    <td><span class="badge badge-primary">${user.role}</span></td>
+                    <td><span class="badge badge-${user.status === 'active' ? 'success' : 'danger'}">${user.status}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-warning btn-sm" onclick="editUser('${user.id}')">✏️ Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteUser('${user.id}')">🗑️ Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            initDashboard();
+            loadSystemConfig();
+            loadBlockedClients();
+        });
+    </script>
+</body>
+</html>
+

@@ -18379,28 +18379,24 @@ Best regards,
         // GOOGLE DRIVE SETUP WIZARD FUNCTIONS
         // ========================================
 
-        const CANONICAL_VERCEL_HOST = 'aweh-invoice-system.vercel.app';
+        const CANONICAL_GITHUB_HOST = 'awehbelekker.github.io';
 
-        function getPreferredAppOrigin() {
-            // Use the stable production domain on Vercel to avoid OAuth redirect_uri_mismatch
-            // and localStorage being split across per-deployment URLs.
-            if (location.hostname.endsWith('.vercel.app')) {
-                return `https://${CANONICAL_VERCEL_HOST}`;
+        function getCanonicalBase() {
+            if (location.hostname.endsWith('.github.io')) {
+                return `https://${CANONICAL_GITHUB_HOST}/CogniCore-Invoicing-System`;
             }
             return location.origin;
         }
 
-        function maybeRedirectToCanonicalVercel() {
-            const isVercel = location.hostname.endsWith('.vercel.app');
-            const isCanonical = location.hostname === CANONICAL_VERCEL_HOST;
+        function maybeRedirectToCanonical() {
+            const isGitHubPages = location.hostname.endsWith('.github.io');
+            const isCanonical = location.hostname === CANONICAL_GITHUB_HOST;
 
-            // Only auto-redirect from Vercel deployment URLs (long hashed hostnames)
-            // to the stable project domain.
-            const looksLikeDeploymentUrl = isVercel && location.hostname.includes('-richards-projects-');
-
-            if (looksLikeDeploymentUrl && !isCanonical) {
-                const target = `https://${CANONICAL_VERCEL_HOST}${location.pathname}${location.search}${location.hash}`;
-                console.warn('🔁 Redirecting to stable domain for OAuth/localStorage:', target);
+            // Only redirect if we're on a different GitHub Pages domain
+            // and not already on the canonical domain
+            if (isGitHubPages && !isCanonical && location.hostname !== CANONICAL_GITHUB_HOST) {
+                const target = `https://${CANONICAL_GITHUB_HOST}/CogniCore-Invoicing-System${location.pathname}${location.search}${location.hash}`;
+                console.warn('🔁 Redirecting to canonical GitHub Pages domain:', target);
                 location.replace(target);
                 return true;
             }
@@ -18640,7 +18636,7 @@ Best regards,
 
         function openQuickGoogleSetup() {
             const originInput = document.getElementById('quickOriginCopy');
-            if (originInput) originInput.value = getPreferredAppOrigin();
+            if (originInput) originInput.value = getCanonicalBase();
 
             const input = document.getElementById('quickClientIdInput');
             if (input) {
@@ -18844,7 +18840,7 @@ Best regards,
                 closeModal('quickGoogleSetupModal');
             } catch (error) {
                 console.error('quickConnectGoogleDrive failed:', error);
-                const preferredOrigin = getPreferredAppOrigin();
+                const preferredOrigin = getCanonicalBase();
                 if (resultDiv) {
                     resultDiv.classList.remove('is-hidden');
                     resultDiv.style.display = 'block';
@@ -23752,7 +23748,7 @@ Generated: ${new Date().toLocaleString()}
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', async () => {
             // Always use the stable Vercel domain to keep OAuth config stable.
-            if (maybeRedirectToCanonicalVercel()) return;
+            if (maybeRedirectToCanonical()) return;
 
             console.log('🚀 Initializing ConiCore Invoicing System...');
             
