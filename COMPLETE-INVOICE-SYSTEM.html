@@ -14093,7 +14093,7 @@ Customers: ${company.customerCount || 0}
                 const extractedData = extractDataFromText(cleaned, detectedType);
                 console.log('Extracted data:', extractedData);
                 
-                const result = {
+                const scanResult = {
                     success: true,
                     detectedType: detectedType,
                     data: extractedData,
@@ -14102,9 +14102,9 @@ Customers: ${company.customerCount || 0}
                     source: 'local-ocr',
                     confidence: result.data.confidence || 'unknown'
                 };
-                
-                console.log('Local OCR result:', result);
-                return result;
+
+                console.log('Local OCR result:', scanResult);
+                return scanResult;
                 
             } catch (ocrError) {
                 console.error('OCR processing error:', ocrError);
@@ -18356,19 +18356,17 @@ Best regards,
                 sku: sku,
                 name: name,
                 landedCost: cost,
-                    title: formatDocTypeLabel(archiveType) || getTypeLabel(scanData.detectedType) || 'Document',
                 description: document.getElementById('quickProductDescription').value.trim(),
                 brand: 'Custom',
                 stock: 0,
                 createdAt: new Date().toISOString()
             };
-            
+
             products.push(product);
             await saveToStorage(getBusinessKey('aweh_products'), products);
-                    requestedType: scanData.requestedType || null,
-            
+
             // Add to current invoice
-            addProductToInvoice(product);
+            addProductToInvoice(product.sku);
             
             closeModal('quickAddProductModal');
             showToast(`🏄‍♂️ Product "${name}" added successfully!`, 'success');
